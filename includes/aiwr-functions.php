@@ -6,3 +6,36 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+/**
+ * Write a single-line JSON diagnostic entry to the PHP error log when WP_DEBUG is on.
+ *
+ * Called at every failure branch. The API key and full prompt/response bodies are never passed in;
+ * callers include only status codes, durations, and truncated diagnostics.
+ *
+ * @param string $event   Short machine-readable event name.
+ * @param array  $context Optional structured context (no secrets, no full bodies).
+ */
+function aiwr_log( $event, array $context = array() ) {
+	if ( ! ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ) {
+		return;
+	}
+
+	$entry = array(
+		'ts'    => gmdate( 'c' ),
+		'event' => (string) $event,
+	);
+
+	if ( ! empty( $context ) ) {
+		$entry['context'] = $context;
+	}
+
+	$encoded = wp_json_encode( $entry );
+
+	if ( false === $encoded ) {
+		$encoded = '{"event":"aiwr_log_encode_failed"}';
+	}
+
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'aiwr ' . $encoded );
+}
