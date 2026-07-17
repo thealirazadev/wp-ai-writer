@@ -33,6 +33,8 @@ class AIWR_Prompts {
 				return self::seo( $input );
 			case 'excerpt':
 				return self::excerpt( $input );
+			case 'alt_text':
+				return self::alt_text( $input );
 		}
 
 		return new WP_Error(
@@ -133,6 +135,42 @@ class AIWR_Prompts {
 		return array(
 			'messages'   => self::messages( $system, $user ),
 			'max_tokens' => 200,
+		);
+	}
+
+	/**
+	 * Describe an image for alt text using the provider's image input.
+	 *
+	 * @param array $input Loaded image with 'mime' and 'data' (base64) keys.
+	 * @return array{messages:array,max_tokens:int}
+	 */
+	private static function alt_text( array $input ) {
+		$system = 'You are an accessibility assistant. Describe the given image for use as alt text in fewer than 150 characters. Return only the description as plain text, with no quotation marks or preamble.';
+
+		$user = array(
+			array(
+				'type' => 'text',
+				'text' => 'Describe this image for alt text.',
+			),
+			array(
+				'type' => 'image',
+				'mime' => $input['mime'],
+				'data' => $input['data'],
+			),
+		);
+
+		return array(
+			'messages'   => array(
+				array(
+					'role'    => 'system',
+					'content' => $system,
+				),
+				array(
+					'role'    => 'user',
+					'content' => $user,
+				),
+			),
+			'max_tokens' => 100,
 		);
 	}
 

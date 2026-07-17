@@ -99,6 +99,16 @@ class AIWR_Rest {
 			return $budget;
 		}
 
+		if ( 'alt_text' === $action ) {
+			$image = $this->load_attachment_image( $valid['input']['attachment_id'] );
+
+			if ( is_wp_error( $image ) ) {
+				return $image;
+			}
+
+			$valid['input'] = $image;
+		}
+
 		$prompt = AIWR_Prompts::build( $action, $valid['input'], $valid['options'] );
 
 		if ( is_wp_error( $prompt ) ) {
@@ -328,6 +338,8 @@ class AIWR_Rest {
 				return $this->validate_seo( $input );
 			case 'excerpt':
 				return $this->validate_excerpt( $input );
+			case 'alt_text':
+				return $this->validate_alt_text( $input );
 		}
 
 		return $this->invalid( __( 'That action is not available.', 'wp-ai-writer' ) );
@@ -452,6 +464,82 @@ class AIWR_Rest {
 	}
 
 	/**
+	 * Validate the alt_text action input.
+	 *
+	 * @param array $input Raw input.
+	 * @return array{input:array,options:array}|WP_Error
+	 */
+	private function validate_alt_text( array $input ) {
+		$attachment_id = isset( $input['attachment_id'] ) ? (int) $input['attachment_id'] : 0;
+
+		if ( $attachment_id < 1 ) {
+			return $this->invalid( __( 'Select an image to describe.', 'wp-ai-writer' ) );
+		}
+
+		return array(
+			'input'   => array( 'attachment_id' => $attachment_id ),
+			'options' => array(),
+		);
+	}
+
+	/**
+	 * Load, validate, and base64-encode a local attachment for the provider's image input.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return array{mime:string,data:string}|WP_Error aiwr_image_unreadable (422) on any failure.
+	 */
+	private function load_attachment_image( $attachment_id ) {
+		if ( 'attachment' !== get_post_type( $attachment_id ) ) {
+			return $this->image_error();
+		}
+
+		$path = get_attached_file( $attachment_id );
+
+		if ( ! $path || ! file_exists( $path ) ) {
+			return $this->image_error();
+		}
+
+		$filetype = wp_check_filetype( $path );
+		$mime     = is_array( $filetype ) ? (string) $filetype['type'] : '';
+
+		if ( ! in_array( $mime, array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ), true ) ) {
+			return $this->image_error();
+		}
+
+		$size = filesize( $path );
+
+		if ( false === $size || $size > 5 * 1024 * 1024 ) {
+			return $this->image_error();
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading a validated local attachment file, not a remote resource.
+		$bytes = file_get_contents( $path );
+
+		if ( false === $bytes ) {
+			return $this->image_error();
+		}
+
+		return array(
+			'mime' => $mime,
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encoding image bytes for provider transport, not obfuscation.
+			'data' => base64_encode( $bytes ),
+		);
+	}
+
+	/**
+	 * The image-unreadable error used for missing, unsupported, or oversized attachments.
+	 *
+	 * @return WP_Error
+	 */
+	private function image_error() {
+		return new WP_Error(
+			'aiwr_image_unreadable',
+			__( 'That image could not be read. It may be missing, too large, or an unsupported type.', 'wp-ai-writer' ),
+			array( 'status' => 422 )
+		);
+	}
+
+	/**
 	 * Shape the provider text into the action's result payload, sanitizing HTML server-side.
 	 *
 	 * @param string $action Action name.
@@ -467,6 +555,8 @@ class AIWR_Rest {
 				return $this->shape_seo( $text );
 			case 'excerpt':
 				return array( 'excerpt' => trim( wp_strip_all_tags( $text ) ) );
+			case 'alt_text':
+				return array( 'alt_text' => $this->truncate( sanitize_text_field( wp_strip_all_tags( $text ) ), 150 ) );
 		}
 
 		return array();
