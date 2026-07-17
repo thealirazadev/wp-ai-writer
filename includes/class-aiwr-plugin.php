@@ -48,7 +48,7 @@ class AIWR_Plugin {
 			true
 		);
 
-		wp_set_script_translations( 'aiwr-editor', 'wp-ai-writer' );
+		wp_set_script_translations( 'aiwr-editor', 'wp-ai-writer', AIWR_PATH . 'languages' );
 
 		wp_localize_script(
 			'aiwr-editor',
