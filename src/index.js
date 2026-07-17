@@ -5,6 +5,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editor';
 import { __ } from '@wordpress/i18n';
 
+import Sidebar from './sidebar';
 import './editor.scss';
 
 const SIDEBAR_NAME = 'aiwr-sidebar';
@@ -20,7 +21,7 @@ function AIWriterSidebar() {
 				title={ __( 'AI Writer', 'wp-ai-writer' ) }
 				icon="edit"
 			>
-				<div className="aiwr-sidebar" />
+				<Sidebar />
 			</PluginSidebar>
 		</>
 	);
