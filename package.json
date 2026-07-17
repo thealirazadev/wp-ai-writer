@@ -1,0 +1,17 @@
+{
+  "name": "wp-ai-writer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Writing assistant sidebar for the WordPress block editor, backed by a secured server-side LLM provider proxy.",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "lint:js": "wp-scripts lint-js src tests/js",
+    "lint:js:fix": "wp-scripts lint-js src tests/js --fix",
+    "test:unit": "wp-scripts test-unit-js",
+    "format": "wp-scripts format",
+    "env": "wp-env"
+  },
+  "devDependencies": {}
+}
