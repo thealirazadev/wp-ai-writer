@@ -77,6 +77,36 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Mock the provider with a specific content payload and 200 status.
+	 *
+	 * @param string $content Provider content field.
+	 */
+	private function mock_provider_content( $content ) {
+		add_filter(
+			'pre_http_request',
+			function () use ( $content ) {
+				$this->provider_called = true;
+
+				return array(
+					'response' => array( 'code' => 200 ),
+					'headers'  => array(),
+					'body'     => wp_json_encode(
+						array(
+							'content' => $content,
+							'usage'   => array(
+								'input_tokens'  => 50,
+								'output_tokens' => 25,
+							),
+						)
+					),
+				);
+			},
+			10,
+			3
+		);
+	}
+
+	/**
 	 * Mock the provider with a server error.
 	 */
 	private function mock_provider_error() {
@@ -246,6 +276,109 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertSame( 502, $response->get_status() );
 		$this->assertSame( 'aiwr_provider_error', $response->get_data()['code'] );
 		$this->assertSame( 1, $this->log_row_count( 'provider_error' ) );
+	}
+
+	public function test_rewrite_returns_html() {
+		$this->mock_provider_content( '<p>Rewritten paragraph.</p>' );
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action'  => 'rewrite',
+				'input'   => array( 'text' => 'Original paragraph.' ),
+				'options' => array(
+					'tone'   => 'casual',
+					'length' => 'shorter',
+				),
+			)
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertStringContainsString( 'Rewritten', $response->get_data()['result']['html'] );
+	}
+
+	public function test_rewrite_rejects_empty_text() {
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'rewrite',
+				'input'  => array( 'text' => '' ),
+			)
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'aiwr_invalid_input', $response->get_data()['code'] );
+	}
+
+	public function test_rewrite_rejects_invalid_tone() {
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action'  => 'rewrite',
+				'input'   => array( 'text' => 'Some text.' ),
+				'options' => array( 'tone' => 'zany' ),
+			)
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_seo_truncates_title_and_description() {
+		$this->mock_provider_content(
+			wp_json_encode(
+				array(
+					'seo_title'        => str_repeat( 'A', 120 ),
+					'meta_description' => str_repeat( 'B', 300 ),
+				)
+			)
+		);
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'seo',
+				'input'  => array(
+					'title'   => 'A page',
+					'content' => 'Enough content to summarize.',
+				),
+			)
+		);
+
+		$data = $response->get_data();
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertLessThanOrEqual( 60, mb_strlen( $data['result']['seo_title'] ) );
+		$this->assertLessThanOrEqual( 160, mb_strlen( $data['result']['meta_description'] ) );
+	}
+
+	public function test_seo_rejects_empty_content() {
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'seo',
+				'input'  => array(
+					'title'   => 'A page',
+					'content' => '',
+				),
+			)
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'aiwr_invalid_input', $response->get_data()['code'] );
+	}
+
+	public function test_excerpt_strips_html() {
+		$this->mock_provider_content( '<p>A tidy summary.</p>' );
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'excerpt',
+				'input'  => array( 'content' => 'A long body of content to summarize.' ),
+			)
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'A tidy summary.', $response->get_data()['result']['excerpt'] );
 	}
 
 	/**
