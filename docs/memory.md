@@ -32,9 +32,15 @@ every non-obvious decision with its reason.
   truncates seo/excerpt content over cap and rejects other violations. Prompt-builder tests plus
   rewrite/seo/excerpt dispatch tests (truncation, validation). JS suite 20/20.
 
+- Phase 4 complete: alt-text scan (findImagesMissingAlt, nested blocks, external images flagged
+  unsupported), per-image generate/apply panel (updateBlockAttributes), server loads+validates the
+  attachment (local file, jpeg/png/gif/webp, <=5MB), base64-encodes it into a neutral image content
+  block, returns alt_text truncated to 150. Missing/unsupported/oversized -> aiwr_image_unreadable
+  (422) with no provider call. JS suite 23/23; PHP image-validation tests added.
+
 ## In progress
 
-- Phase 4 next: alt text action.
+- Phase 5 next: activity log admin screen, i18n, uninstall, hardening.
 
 ## Decisions log
 
