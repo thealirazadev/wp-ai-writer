@@ -5,10 +5,11 @@ import { __ } from '@wordpress/i18n';
 import { TabPanel, Notice } from '@wordpress/components';
 
 import DraftPanel from './actions/draft';
+import RewritePanel from './actions/rewrite';
 
 const ACTIONS = [
 	{ name: 'draft', title: __( 'Draft', 'wp-ai-writer' ) },
-	{ name: 'rewrite', title: __( 'Rewrite', 'wp-ai-writer' ), disabled: true },
+	{ name: 'rewrite', title: __( 'Rewrite', 'wp-ai-writer' ) },
 	{ name: 'seo', title: __( 'SEO', 'wp-ai-writer' ), disabled: true },
 	{ name: 'excerpt', title: __( 'Excerpt', 'wp-ai-writer' ), disabled: true },
 	{
@@ -30,6 +31,8 @@ function renderPanel( name ) {
 	switch ( name ) {
 		case 'draft':
 			return <DraftPanel />;
+		case 'rewrite':
+			return <RewritePanel />;
 		default:
 			return <ComingSoon />;
 	}
