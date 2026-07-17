@@ -8,17 +8,14 @@ import DraftPanel from './actions/draft';
 import RewritePanel from './actions/rewrite';
 import SeoPanel from './actions/seo';
 import ExcerptPanel from './actions/excerpt';
+import AltTextPanel from './actions/alt-text';
 
 const ACTIONS = [
 	{ name: 'draft', title: __( 'Draft', 'wp-ai-writer' ) },
 	{ name: 'rewrite', title: __( 'Rewrite', 'wp-ai-writer' ) },
 	{ name: 'seo', title: __( 'SEO', 'wp-ai-writer' ) },
 	{ name: 'excerpt', title: __( 'Excerpt', 'wp-ai-writer' ) },
-	{
-		name: 'alt_text',
-		title: __( 'Alt text', 'wp-ai-writer' ),
-		disabled: true,
-	},
+	{ name: 'alt_text', title: __( 'Alt text', 'wp-ai-writer' ) },
 ];
 
 function ComingSoon() {
@@ -39,6 +36,8 @@ function renderPanel( name ) {
 			return <SeoPanel />;
 		case 'excerpt':
 			return <ExcerptPanel />;
+		case 'alt_text':
+			return <AltTextPanel />;
 		default:
 			return <ComingSoon />;
 	}
