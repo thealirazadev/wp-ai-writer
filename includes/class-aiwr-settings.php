@@ -268,7 +268,59 @@ class AIWR_Settings {
 				submit_button();
 				?>
 			</form>
+			<?php $this->render_usage_panel(); ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render the current-month usage panel.
+	 */
+	private function render_usage_panel() {
+		$settings = aiwr_get_settings();
+		$usage    = AIWR_Limits::get_current_usage();
+		$budget   = (int) $settings['monthly_budget_tokens'];
+		$total    = $usage['input_tokens'] + $usage['output_tokens'];
+		?>
+		<h2><?php esc_html_e( 'Usage this month', 'wp-ai-writer' ); ?></h2>
+		<?php if ( 0 === $total ) : ?>
+			<p><?php esc_html_e( 'No usage recorded this month.', 'wp-ai-writer' ); ?></p>
+		<?php else : ?>
+			<table class="widefat striped" style="max-width:32rem;">
+				<tbody>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Input tokens', 'wp-ai-writer' ); ?></th>
+						<td><?php echo esc_html( number_format_i18n( $usage['input_tokens'] ) ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Output tokens', 'wp-ai-writer' ); ?></th>
+						<td><?php echo esc_html( number_format_i18n( $usage['output_tokens'] ) ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Total tokens', 'wp-ai-writer' ); ?></th>
+						<td><?php echo esc_html( number_format_i18n( $total ) ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Monthly budget', 'wp-ai-writer' ); ?></th>
+						<td>
+							<?php
+							if ( 0 < $budget ) {
+								$percent = min( 100, (int) round( $total / $budget * 100 ) );
+								printf(
+									/* translators: 1: budget token count, 2: percent of budget used. */
+									esc_html__( '%1$s tokens (%2$d%% used)', 'wp-ai-writer' ),
+									esc_html( number_format_i18n( $budget ) ),
+									(int) $percent
+								);
+							} else {
+								esc_html_e( 'No cap', 'wp-ai-writer' );
+							}
+							?>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		<?php endif; ?>
 		<?php
 	}
 }
