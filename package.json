@@ -13,5 +13,8 @@
     "format": "wp-scripts format",
     "env": "wp-env"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@wordpress/env": "11.11.0",
+    "@wordpress/scripts": "33.0.0"
+  }
 }
