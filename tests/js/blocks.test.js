@@ -14,6 +14,7 @@ import {
 	htmlToBlocks,
 	blockToText,
 	isRewritableBlock,
+	findImagesMissingAlt,
 } from '../../src/utils/blocks';
 
 describe( 'htmlToBlocks', () => {
@@ -77,5 +78,61 @@ describe( 'blockToText', () => {
 		expect( blockToText( { name: 'core/image', attributes: {} } ) ).toBe(
 			''
 		);
+	} );
+} );
+
+describe( 'findImagesMissingAlt', () => {
+	it( 'lists only images with empty alt', () => {
+		const blocks = [
+			{
+				name: 'core/image',
+				clientId: 'a',
+				attributes: { id: 1, url: 'a.jpg', alt: 'described' },
+			},
+			{
+				name: 'core/image',
+				clientId: 'b',
+				attributes: { id: 2, url: 'b.jpg', alt: '' },
+			},
+			{ name: 'core/paragraph', clientId: 'c', attributes: {} },
+		];
+
+		const missing = findImagesMissingAlt( blocks );
+		expect( missing ).toHaveLength( 1 );
+		expect( missing[ 0 ].id ).toBe( 2 );
+		expect( missing[ 0 ].supported ).toBe( true );
+	} );
+
+	it( 'walks nested blocks and flags external images as unsupported', () => {
+		const blocks = [
+			{
+				name: 'core/columns',
+				clientId: 'col',
+				attributes: {},
+				innerBlocks: [
+					{
+						name: 'core/image',
+						clientId: 'x',
+						attributes: { url: 'https://ext/x.jpg', alt: '' },
+					},
+				],
+			},
+		];
+
+		const missing = findImagesMissingAlt( blocks );
+		expect( missing ).toHaveLength( 1 );
+		expect( missing[ 0 ].supported ).toBe( false );
+	} );
+
+	it( 'returns an empty array when all images have alt text', () => {
+		const blocks = [
+			{
+				name: 'core/image',
+				clientId: 'a',
+				attributes: { id: 1, url: 'a.jpg', alt: 'ok' },
+			},
+		];
+
+		expect( findImagesMissingAlt( blocks ) ).toEqual( [] );
 	} );
 } );

@@ -80,3 +80,43 @@ export function blockToText( block ) {
 			return '';
 	}
 }
+
+/**
+ * Find image blocks whose alt attribute is empty, walking nested blocks.
+ *
+ * Each entry reports whether it is supported: only images backed by a media attachment (with an id)
+ * can be described. External-URL images without an attachment are reported as unsupported.
+ *
+ * @param {Array} blocks Top-level blocks from the editor store.
+ * @return {Array<{clientId: string, id: number, url: string, supported: boolean}>} Missing-alt images.
+ */
+export function findImagesMissingAlt( blocks ) {
+	const found = [];
+
+	const walk = ( list ) => {
+		for ( const block of list || [] ) {
+			if ( 'core/image' === block.name ) {
+				const attributes = block.attributes || {};
+				const alt = String( attributes.alt || '' ).trim();
+				if ( ! alt ) {
+					found.push( {
+						clientId: block.clientId,
+						id: attributes.id || 0,
+						url: attributes.url || '',
+						supported: !! attributes.id,
+					} );
+				}
+			}
+
+			if (
+				Array.isArray( block.innerBlocks ) &&
+				block.innerBlocks.length
+			) {
+				walk( block.innerBlocks );
+			}
+		}
+	};
+
+	walk( blocks );
+	return found;
+}
