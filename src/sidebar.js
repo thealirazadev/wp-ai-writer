@@ -6,11 +6,12 @@ import { TabPanel, Notice } from '@wordpress/components';
 
 import DraftPanel from './actions/draft';
 import RewritePanel from './actions/rewrite';
+import SeoPanel from './actions/seo';
 
 const ACTIONS = [
 	{ name: 'draft', title: __( 'Draft', 'wp-ai-writer' ) },
 	{ name: 'rewrite', title: __( 'Rewrite', 'wp-ai-writer' ) },
-	{ name: 'seo', title: __( 'SEO', 'wp-ai-writer' ), disabled: true },
+	{ name: 'seo', title: __( 'SEO', 'wp-ai-writer' ) },
 	{ name: 'excerpt', title: __( 'Excerpt', 'wp-ai-writer' ), disabled: true },
 	{
 		name: 'alt_text',
@@ -33,6 +34,8 @@ function renderPanel( name ) {
 			return <DraftPanel />;
 		case 'rewrite':
 			return <RewritePanel />;
+		case 'seo':
+			return <SeoPanel />;
 		default:
 			return <ComingSoon />;
 	}
