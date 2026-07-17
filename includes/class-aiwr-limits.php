@@ -90,7 +90,24 @@ class AIWR_Limits {
 	}
 
 	/**
-	 * Current calendar-month usage counter, resetting when the stored month is stale.
+	 * Add token usage to the current-month counter after a completed request.
+	 *
+	 * @param int $input_tokens  Input tokens used.
+	 * @param int $output_tokens Output tokens used.
+	 */
+	public static function add_usage( $input_tokens, $output_tokens ) {
+		$usage                   = self::get_current_usage();
+		$usage['input_tokens']  += max( 0, (int) $input_tokens );
+		$usage['output_tokens'] += max( 0, (int) $output_tokens );
+
+		update_option( self::USAGE_OPTION, $usage, false );
+	}
+
+	/**
+	 * Current calendar-month usage counter.
+	 *
+	 * The counter is an O(1) cache for the budget check. When it is missing or from a stale month it
+	 * is recomputed from the activity log, which is the source of truth.
 	 *
 	 * @return array{month:string,input_tokens:int,output_tokens:int}
 	 */
@@ -106,10 +123,15 @@ class AIWR_Limits {
 			);
 		}
 
-		return array(
+		$sum   = AIWR_Log::monthly_sum( $month );
+		$fresh = array(
 			'month'         => $month,
-			'input_tokens'  => 0,
-			'output_tokens' => 0,
+			'input_tokens'  => $sum['input_tokens'],
+			'output_tokens' => $sum['output_tokens'],
 		);
+
+		update_option( self::USAGE_OPTION, $fresh, false );
+
+		return $fresh;
 	}
 }
