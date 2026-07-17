@@ -105,13 +105,18 @@ class AIWR_Rest {
 			return $prompt;
 		}
 
-		$result = AIWR_Provider::request(
-			array(
-				'model'      => $settings['model'],
-				'max_tokens' => $prompt['max_tokens'],
-				'messages'   => $prompt['messages'],
-			)
+		$payload = array(
+			'model'      => $settings['model'],
+			'max_tokens' => $prompt['max_tokens'],
+			'messages'   => $prompt['messages'],
 		);
+
+		if ( $request->get_param( 'stream' ) && $this->action_can_stream( $action ) && AIWR_Provider::can_stream() ) {
+			$this->stream_response( $action, $payload, $settings, $started );
+			// stream_response sends its own response and exits.
+		}
+
+		$result = AIWR_Provider::request( $payload );
 
 		if ( is_wp_error( $result ) ) {
 			AIWR_Log::record(
@@ -163,6 +168,144 @@ class AIWR_Rest {
 	 */
 	private function elapsed_ms( $started ) {
 		return (int) round( ( microtime( true ) - $started ) * 1000 );
+	}
+
+	/**
+	 * Whether an action supports streaming. Short structured outputs are always JSON.
+	 *
+	 * @param string $action Action name.
+	 * @return bool
+	 */
+	private function action_can_stream( $action ) {
+		return in_array( $action, array( 'draft' ), true );
+	}
+
+	/**
+	 * Relay a streamed generation as normalized SSE events, then log and exit.
+	 *
+	 * This route self-manages its output: it sends event-stream headers, relays provider deltas, and
+	 * emits a terminal done/error event, so it bypasses the normal REST response serialization.
+	 *
+	 * @param string $action   Action name.
+	 * @param array  $payload  Provider payload.
+	 * @param array  $settings Plugin settings.
+	 * @param float  $started  microtime( true ) marker.
+	 */
+	private function stream_response( $action, $payload, $settings, $started ) {
+		$this->send_stream_headers();
+
+		$assembled = '';
+		$saw_delta = false;
+
+		$on_delta = function ( $text ) use ( &$assembled, &$saw_delta ) {
+			$clean      = wp_kses_post( $text );
+			$assembled .= $clean;
+			$saw_delta  = true;
+			$this->emit_event( 'delta', array( 'text' => $clean ) );
+		};
+
+		$outcome  = AIWR_Provider::stream( $payload, $on_delta );
+		$duration = $this->elapsed_ms( $started );
+		$user_id  = get_current_user_id();
+
+		if ( is_wp_error( $outcome ) ) {
+			$error_data = $outcome->get_error_data();
+			$status     = isset( $error_data['status'] ) ? (int) $error_data['status'] : 502;
+
+			$this->emit_event(
+				'error',
+				array(
+					'code'    => $outcome->get_error_code(),
+					'message' => $outcome->get_error_message(),
+					'data'    => array( 'status' => $status ),
+				)
+			);
+
+			$estimated_output = $saw_delta ? (int) round( strlen( $assembled ) / 4 ) : 0;
+
+			AIWR_Log::record(
+				array(
+					'user_id'          => $user_id,
+					'action'           => $action,
+					'model'            => $settings['model'],
+					'output_tokens'    => $estimated_output,
+					'tokens_estimated' => $saw_delta,
+					'status'           => $saw_delta ? 'aborted' : 'provider_error',
+					'duration_ms'      => $duration,
+				)
+			);
+
+			if ( $saw_delta ) {
+				AIWR_Limits::add_usage( 0, $estimated_output );
+			}
+
+			exit;
+		}
+
+		$usage = $outcome['usage'];
+		$cost  = $this->cost_estimate( $usage, $settings );
+
+		$this->emit_event(
+			'done',
+			array(
+				'usage'         => $usage,
+				'cost_estimate' => $cost,
+			)
+		);
+
+		AIWR_Log::record(
+			array(
+				'user_id'       => $user_id,
+				'action'        => $action,
+				'model'         => $settings['model'],
+				'input_tokens'  => $usage['input_tokens'],
+				'output_tokens' => $usage['output_tokens'],
+				'cost_estimate' => $cost,
+				'status'        => 'success',
+				'duration_ms'   => $duration,
+			)
+		);
+
+		AIWR_Limits::add_usage( $usage['input_tokens'], $usage['output_tokens'] );
+
+		exit;
+	}
+
+	/**
+	 * Send the event-stream headers and disable output buffering and compression.
+	 */
+	private function send_stream_headers() {
+		if ( function_exists( 'apache_setenv' ) ) {
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_apache_setenv, WordPress.PHP.NoSilencedErrors.Discouraged
+			@apache_setenv( 'no-gzip', '1' );
+		}
+
+		// phpcs:ignore WordPress.PHP.IniSet.Risky, WordPress.PHP.NoSilencedErrors.Discouraged
+		@ini_set( 'zlib.output_compression', '0' );
+
+		while ( ob_get_level() > 0 ) {
+			ob_end_flush();
+		}
+
+		ob_implicit_flush( true );
+
+		header( 'Content-Type: text/event-stream; charset=utf-8' );
+		header( 'Cache-Control: no-cache' );
+		header( 'X-Accel-Buffering: no' );
+	}
+
+	/**
+	 * Write one normalized SSE event and flush it to the client.
+	 *
+	 * @param string $event Event name (delta, done, error).
+	 * @param array  $data  Event payload.
+	 */
+	private function emit_event( $event, array $data ) {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Controlled event name and JSON-encoded payload for an SSE frame.
+		echo 'event: ' . $event . "\n";
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-encoded SSE payload.
+		echo 'data: ' . wp_json_encode( $data ) . "\n\n";
+		flush();
 	}
 
 	/**

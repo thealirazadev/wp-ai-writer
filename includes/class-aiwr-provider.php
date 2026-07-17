@@ -193,4 +193,157 @@ class AIWR_Provider {
 	private static function snippet( $text ) {
 		return substr( (string) $text, 0, 500 );
 	}
+
+	const STREAM_CONNECT_TIMEOUT = 15;
+	const STREAM_TOTAL_TIMEOUT   = 120;
+
+	/**
+	 * Whether the request can be streamed on this host.
+	 *
+	 * Because wp_remote_post buffers whole responses, streaming needs a direct cURL handle and output
+	 * that has not started yet.
+	 *
+	 * @return bool
+	 */
+	public static function can_stream() {
+		return function_exists( 'curl_init' ) && ! headers_sent();
+	}
+
+	/**
+	 * Stream a generation request, relaying each text fragment through the delta callback.
+	 *
+	 * This is the one sanctioned direct-cURL path in the plugin: wp_remote_* cannot relay SSE. The
+	 * provider's own frames are parsed here and never leak to the browser; the caller emits the
+	 * normalized events. Returns the reported usage on success or a mapped WP_Error on failure.
+	 *
+	 * @param array    $payload  Provider payload (model, max_tokens, messages).
+	 * @param callable $on_delta Receives each decoded text fragment as it arrives.
+	 * @return array{usage:array}|WP_Error
+	 */
+	public static function stream( array $payload, callable $on_delta ) {
+		$settings = aiwr_get_settings();
+		$buffer   = '';
+		$state    = array(
+			'usage' => array(
+				'input_tokens'  => 0,
+				'output_tokens' => 0,
+			),
+			'done'  => false,
+			'error' => false,
+		);
+
+		$write = static function ( $handle, $chunk ) use ( &$buffer, &$state, $on_delta ) {
+			$buffer .= $chunk;
+			$pos     = strpos( $buffer, "\n\n" );
+			while ( false !== $pos ) {
+				$frame  = substr( $buffer, 0, $pos );
+				$buffer = substr( $buffer, $pos + 2 );
+				self::handle_stream_frame( $frame, $state, $on_delta );
+				$pos = strpos( $buffer, "\n\n" );
+			}
+			return strlen( $chunk );
+		};
+
+		// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt_array, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_errno, WordPress.WP.AlternativeFunctions.curl_curl_getinfo, WordPress.WP.AlternativeFunctions.curl_curl_close -- Direct cURL is the sanctioned exception for SSE relay; wp_remote_* buffers whole responses.
+		$handle = curl_init();
+		curl_setopt_array(
+			$handle,
+			array(
+				CURLOPT_URL            => AIWR_PROVIDER_ENDPOINT,
+				CURLOPT_POST           => true,
+				CURLOPT_POSTFIELDS     => wp_json_encode( self::build_body( $payload, true ) ),
+				CURLOPT_HTTPHEADER     => self::curl_headers( $settings['api_key'] ),
+				CURLOPT_WRITEFUNCTION  => $write,
+				CURLOPT_CONNECTTIMEOUT => self::STREAM_CONNECT_TIMEOUT,
+				CURLOPT_TIMEOUT        => self::STREAM_TOTAL_TIMEOUT,
+				CURLOPT_RETURNTRANSFER => false,
+			)
+		);
+
+		curl_exec( $handle );
+		$errno  = curl_errno( $handle );
+		$status = (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE );
+		curl_close( $handle );
+		// phpcs:enable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt_array, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_errno, WordPress.WP.AlternativeFunctions.curl_curl_getinfo, WordPress.WP.AlternativeFunctions.curl_curl_close
+
+		if ( '' !== trim( $buffer ) ) {
+			self::handle_stream_frame( $buffer, $state, $on_delta );
+		}
+
+		if ( $errno ) {
+			aiwr_log( 'provider_stream_curl_error', array( 'errno' => $errno ) );
+
+			if ( defined( 'CURLE_OPERATION_TIMEDOUT' ) && CURLE_OPERATION_TIMEDOUT === $errno ) {
+				return new WP_Error(
+					'aiwr_provider_timeout',
+					__( 'The writing service took too long to respond. Please try again.', 'wp-ai-writer' ),
+					array( 'status' => 504 )
+				);
+			}
+
+			return self::provider_error();
+		}
+
+		if ( $status < 200 || $status >= 300 || $state['error'] || ! $state['done'] ) {
+			aiwr_log(
+				'provider_stream_failed',
+				array(
+					'status' => $status,
+					'done'   => $state['done'],
+				)
+			);
+			return self::provider_error();
+		}
+
+		return array( 'usage' => $state['usage'] );
+	}
+
+	/**
+	 * Parse one provider SSE frame and dispatch its normalized effect.
+	 *
+	 * @param string   $frame    Raw frame text (without the trailing blank line).
+	 * @param array    $state    Accumulating state (usage, done, error) by reference.
+	 * @param callable $on_delta Delta callback.
+	 */
+	private static function handle_stream_frame( $frame, array &$state, callable $on_delta ) {
+		foreach ( explode( "\n", $frame ) as $line ) {
+			$line = trim( $line );
+
+			if ( '' === $line || ':' === $line[0] || 0 !== strpos( $line, 'data:' ) ) {
+				continue;
+			}
+
+			$json = trim( substr( $line, 5 ) );
+			$data = json_decode( $json, true );
+
+			if ( ! is_array( $data ) ) {
+				continue;
+			}
+
+			$type = isset( $data['type'] ) ? $data['type'] : '';
+
+			if ( 'delta' === $type && isset( $data['text'] ) ) {
+				$on_delta( (string) $data['text'] );
+			} elseif ( 'done' === $type ) {
+				$state['usage'] = self::parse_usage( $data );
+				$state['done']  = true;
+			} elseif ( 'error' === $type ) {
+				$state['error'] = true;
+			}
+		}
+	}
+
+	/**
+	 * Header lines for the streaming request, including the stored key.
+	 *
+	 * @param string $key Provider key.
+	 * @return string[]
+	 */
+	private static function curl_headers( $key ) {
+		return array(
+			'Content-Type: application/json',
+			'Accept: text/event-stream',
+			'Authorization: Bearer ' . $key,
+		);
+	}
 }
