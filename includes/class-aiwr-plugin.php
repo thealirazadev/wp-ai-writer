@@ -6,3 +6,27 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+/**
+ * Boots the plugin's surfaces and hooks.
+ */
+class AIWR_Plugin {
+
+	/**
+	 * Register hooks and instantiate the plugin's components.
+	 */
+	public function run() {
+		add_action( 'init', array( $this, 'load_textdomain' ) );
+	}
+
+	/**
+	 * Load the plugin translations.
+	 */
+	public function load_textdomain() {
+		load_plugin_textdomain(
+			'wp-ai-writer',
+			false,
+			dirname( plugin_basename( AIWR_PLUGIN_FILE ) ) . '/languages'
+		);
+	}
+}
