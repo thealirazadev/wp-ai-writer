@@ -17,9 +17,18 @@ every non-obvious decision with its reason.
   counter with recompute-from-log. PHPUnit tests written for limits and the REST route (provider
   mocked via pre_http_request). phpcs clean, all PHP `php -l` clean.
 
+- Phase 2 complete: wp-scripts build wired; editor assets enqueued with REST URL + nonce (no key
+  in the browser); sidebar registered (TabPanel, five actions, only draft live); draft panel
+  (prompt, streaming preview, insert-as-blocks via rawHandler, discard); streaming client with
+  content-type branching, SSE parser, and single non-streaming retry; PHP SSE relay via direct cURL
+  in the provider (the sanctioned exception) with normalized delta/done/error events and
+  aborted/estimated logging. JS tests 15/15 (SSE parser, fallback, html-to-blocks). ESLint flat
+  config layers on the wp-scripts defaults and disables import-resolution for the externalized
+  @wordpress/* packages.
+
 ## In progress
 
-- Phase 2 next: sidebar, draft action, streaming relay with fallback.
+- Phase 3 next: rewrite, SEO, and excerpt actions.
 
 ## Decisions log
 
@@ -54,3 +63,12 @@ every non-obvious decision with its reason.
   host with docker compose + a DB is available; it could not be executed here. Left as a documented
   manual step. A one-time live-provider smoke test (real key + real AIWR_PROVIDER_ENDPOINT) is also a
   manual step, per testing.md.
+- Provider streaming SSE frame shape (neutral, in class-aiwr-provider.php): each frame is a
+  `data: {json}` line whose json has `type` in {delta (with text), done (with usage), error}. The
+  relay re-emits normalized `event: delta|done|error` frames to the browser. The PHP streaming path
+  calls exit() and writes raw output, so it is not exercisable in PHPUnit; it is covered by the JS
+  SSE parser/fallback tests and is a manual wp-env verification item.
+- ESLint 9 flat config (wp-scripts 33): eslint.config.js spreads
+  `@wordpress/scripts/config/eslint.config.cjs` and turns off import/no-unresolved and
+  import/no-extraneous-dependencies, since the @wordpress/* packages are runtime-provided, not
+  installed.
