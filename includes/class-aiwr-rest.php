@@ -177,7 +177,7 @@ class AIWR_Rest {
 	 * @return bool
 	 */
 	private function action_can_stream( $action ) {
-		return in_array( $action, array( 'draft', 'rewrite' ), true );
+		return in_array( $action, array( 'draft', 'rewrite', 'excerpt' ), true );
 	}
 
 	/**
@@ -326,6 +326,8 @@ class AIWR_Rest {
 				return $this->validate_rewrite( $input, $request->get_param( 'options' ) );
 			case 'seo':
 				return $this->validate_seo( $input );
+			case 'excerpt':
+				return $this->validate_excerpt( $input );
 		}
 
 		return $this->invalid( __( 'That action is not available.', 'wp-ai-writer' ) );
@@ -427,6 +429,29 @@ class AIWR_Rest {
 	}
 
 	/**
+	 * Validate the excerpt action input. Content over the cap is truncated, not rejected.
+	 *
+	 * @param array $input Raw input.
+	 * @return array{input:array,options:array}|WP_Error
+	 */
+	private function validate_excerpt( array $input ) {
+		$content = isset( $input['content'] ) ? trim( wp_strip_all_tags( (string) $input['content'] ) ) : '';
+
+		if ( mb_strlen( $content ) < 1 ) {
+			return $this->invalid( __( 'Add some content to the post before generating an excerpt.', 'wp-ai-writer' ) );
+		}
+
+		if ( mb_strlen( $content ) > 20000 ) {
+			$content = mb_substr( $content, 0, 20000 );
+		}
+
+		return array(
+			'input'   => array( 'content' => $content ),
+			'options' => array(),
+		);
+	}
+
+	/**
 	 * Shape the provider text into the action's result payload, sanitizing HTML server-side.
 	 *
 	 * @param string $action Action name.
@@ -440,6 +465,8 @@ class AIWR_Rest {
 				return array( 'html' => wp_kses_post( $text ) );
 			case 'seo':
 				return $this->shape_seo( $text );
+			case 'excerpt':
+				return array( 'excerpt' => trim( wp_strip_all_tags( $text ) ) );
 		}
 
 		return array();

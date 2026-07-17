@@ -31,6 +31,8 @@ class AIWR_Prompts {
 				return self::rewrite( $input, $options );
 			case 'seo':
 				return self::seo( $input );
+			case 'excerpt':
+				return self::excerpt( $input );
 		}
 
 		return new WP_Error(
@@ -114,6 +116,23 @@ class AIWR_Prompts {
 		return array(
 			'messages'   => self::messages( $system, $user ),
 			'max_tokens' => 400,
+		);
+	}
+
+	/**
+	 * Summarize the post content into a short excerpt.
+	 *
+	 * @param array $input Input with a 'content' key.
+	 * @return array{messages:array,max_tokens:int}
+	 */
+	private static function excerpt( array $input ) {
+		$system = 'You are a writing assistant. Summarize the given content into a single concise excerpt of about 40 to 55 words. Return plain text only, with no HTML, quotation marks, or preamble.';
+
+		$user = "Summarize this content into an excerpt:\n\n" . $input['content'];
+
+		return array(
+			'messages'   => self::messages( $system, $user ),
+			'max_tokens' => 200,
 		);
 	}
 
