@@ -177,7 +177,7 @@ class AIWR_Rest {
 	 * @return bool
 	 */
 	private function action_can_stream( $action ) {
-		return in_array( $action, array( 'draft' ), true );
+		return in_array( $action, array( 'draft', 'rewrite' ), true );
 	}
 
 	/**
@@ -322,6 +322,8 @@ class AIWR_Rest {
 		switch ( $action ) {
 			case 'draft':
 				return $this->validate_draft( $input );
+			case 'rewrite':
+				return $this->validate_rewrite( $input, $request->get_param( 'options' ) );
 		}
 
 		return $this->invalid( __( 'That action is not available.', 'wp-ai-writer' ) );
@@ -352,6 +354,46 @@ class AIWR_Rest {
 	}
 
 	/**
+	 * Validate the rewrite action input and options.
+	 *
+	 * @param array $input   Raw input.
+	 * @param mixed $options Raw options.
+	 * @return array{input:array,options:array}|WP_Error
+	 */
+	private function validate_rewrite( array $input, $options ) {
+		$text   = isset( $input['text'] ) ? trim( sanitize_textarea_field( (string) $input['text'] ) ) : '';
+		$length = mb_strlen( $text );
+
+		if ( $length < 1 ) {
+			return $this->invalid( __( 'Select a block with text to rewrite.', 'wp-ai-writer' ) );
+		}
+
+		if ( $length > 8000 ) {
+			return $this->invalid( __( 'The selected text must be 8000 characters or fewer.', 'wp-ai-writer' ) );
+		}
+
+		$options = is_array( $options ) ? $options : array();
+		$tone    = isset( $options['tone'] ) ? sanitize_key( $options['tone'] ) : 'professional';
+		$len     = isset( $options['length'] ) ? sanitize_key( $options['length'] ) : 'same';
+
+		if ( ! in_array( $tone, array( 'professional', 'friendly', 'casual', 'confident' ), true ) ) {
+			return $this->invalid( __( 'Choose a valid tone.', 'wp-ai-writer' ) );
+		}
+
+		if ( ! in_array( $len, array( 'shorter', 'same', 'longer' ), true ) ) {
+			return $this->invalid( __( 'Choose a valid length.', 'wp-ai-writer' ) );
+		}
+
+		return array(
+			'input'   => array( 'text' => $text ),
+			'options' => array(
+				'tone'   => $tone,
+				'length' => $len,
+			),
+		);
+	}
+
+	/**
 	 * Shape the provider text into the action's result payload, sanitizing HTML server-side.
 	 *
 	 * @param string $action Action name.
@@ -361,6 +403,7 @@ class AIWR_Rest {
 	private function shape_result( $action, $text ) {
 		switch ( $action ) {
 			case 'draft':
+			case 'rewrite':
 				return array( 'html' => wp_kses_post( $text ) );
 		}
 
