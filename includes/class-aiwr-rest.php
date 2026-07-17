@@ -324,6 +324,8 @@ class AIWR_Rest {
 				return $this->validate_draft( $input );
 			case 'rewrite':
 				return $this->validate_rewrite( $input, $request->get_param( 'options' ) );
+			case 'seo':
+				return $this->validate_seo( $input );
 		}
 
 		return $this->invalid( __( 'That action is not available.', 'wp-ai-writer' ) );
@@ -394,6 +396,37 @@ class AIWR_Rest {
 	}
 
 	/**
+	 * Validate the seo action input. Content over the cap is truncated, not rejected.
+	 *
+	 * @param array $input Raw input.
+	 * @return array{input:array,options:array}|WP_Error
+	 */
+	private function validate_seo( array $input ) {
+		$title = isset( $input['title'] ) ? sanitize_text_field( (string) $input['title'] ) : '';
+		if ( mb_strlen( $title ) > 300 ) {
+			$title = mb_substr( $title, 0, 300 );
+		}
+
+		$content = isset( $input['content'] ) ? trim( wp_strip_all_tags( (string) $input['content'] ) ) : '';
+
+		if ( mb_strlen( $content ) < 1 ) {
+			return $this->invalid( __( 'Add some content to the post before generating SEO text.', 'wp-ai-writer' ) );
+		}
+
+		if ( mb_strlen( $content ) > 20000 ) {
+			$content = mb_substr( $content, 0, 20000 );
+		}
+
+		return array(
+			'input'   => array(
+				'title'   => $title,
+				'content' => $content,
+			),
+			'options' => array(),
+		);
+	}
+
+	/**
 	 * Shape the provider text into the action's result payload, sanitizing HTML server-side.
 	 *
 	 * @param string $action Action name.
@@ -405,9 +438,64 @@ class AIWR_Rest {
 			case 'draft':
 			case 'rewrite':
 				return array( 'html' => wp_kses_post( $text ) );
+			case 'seo':
+				return $this->shape_seo( $text );
 		}
 
 		return array();
+	}
+
+	/**
+	 * Parse the provider's seo output into a truncated title and meta description.
+	 *
+	 * @param string $text Provider text (expected to contain a JSON object).
+	 * @return array{seo_title:string,meta_description:string}
+	 */
+	private function shape_seo( $text ) {
+		$data  = json_decode( $this->extract_json( $text ), true );
+		$title = is_array( $data ) && isset( $data['seo_title'] ) ? (string) $data['seo_title'] : '';
+		$desc  = is_array( $data ) && isset( $data['meta_description'] ) ? (string) $data['meta_description'] : '';
+
+		if ( ! is_array( $data ) ) {
+			$lines = preg_split( '/\r?\n/', trim( wp_strip_all_tags( $text ) ) );
+			$title = isset( $lines[0] ) ? $lines[0] : '';
+			$desc  = count( $lines ) > 1 ? trim( implode( ' ', array_slice( $lines, 1 ) ) ) : '';
+		}
+
+		return array(
+			'seo_title'        => $this->truncate( sanitize_text_field( $title ), 60 ),
+			'meta_description' => $this->truncate( sanitize_text_field( $desc ), 160 ),
+		);
+	}
+
+	/**
+	 * Extract the first JSON object from a string, tolerating surrounding text.
+	 *
+	 * @param string $text Text possibly wrapping a JSON object.
+	 * @return string JSON substring, or the original text.
+	 */
+	private function extract_json( $text ) {
+		$start = strpos( $text, '{' );
+		$end   = strrpos( $text, '}' );
+
+		if ( false === $start || false === $end || $end < $start ) {
+			return $text;
+		}
+
+		return substr( $text, $start, $end - $start + 1 );
+	}
+
+	/**
+	 * Trim a string to a maximum character length.
+	 *
+	 * @param string $text  Text.
+	 * @param int    $limit Maximum length.
+	 * @return string
+	 */
+	private function truncate( $text, $limit ) {
+		$text = trim( $text );
+
+		return mb_strlen( $text ) > $limit ? trim( mb_substr( $text, 0, $limit ) ) : $text;
 	}
 
 	/**

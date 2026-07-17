@@ -29,6 +29,8 @@ class AIWR_Prompts {
 				return self::draft( $input );
 			case 'rewrite':
 				return self::rewrite( $input, $options );
+			case 'seo':
+				return self::seo( $input );
 		}
 
 		return new WP_Error(
@@ -91,6 +93,27 @@ class AIWR_Prompts {
 		return array(
 			'messages'   => self::messages( $system, $user ),
 			'max_tokens' => 1500,
+		);
+	}
+
+	/**
+	 * Produce an SEO title and meta description from the post title and content.
+	 *
+	 * @param array $input Input with 'title' and 'content' keys.
+	 * @return array{messages:array,max_tokens:int}
+	 */
+	private static function seo( array $input ) {
+		$system = 'You are an SEO assistant. From the given page title and content, write a compelling SEO title of at most 60 characters and a meta description of at most 160 characters. Respond with a single JSON object exactly in the form {"seo_title": "...", "meta_description": "..."} and nothing else.';
+
+		$user = sprintf(
+			"Title: %s\n\nContent:\n%s",
+			$input['title'],
+			$input['content']
+		);
+
+		return array(
+			'messages'   => self::messages( $system, $user ),
+			'max_tokens' => 400,
 		);
 	}
 
