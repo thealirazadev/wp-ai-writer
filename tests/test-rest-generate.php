@@ -381,6 +381,70 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertSame( 'A tidy summary.', $response->get_data()['result']['excerpt'] );
 	}
 
+	public function test_alt_text_rejects_missing_id() {
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'alt_text',
+				'input'  => array( 'attachment_id' => 0 ),
+			)
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_alt_text_missing_attachment_is_unreadable() {
+		$this->mock_provider_content( 'unused' );
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'alt_text',
+				'input'  => array( 'attachment_id' => 987654 ),
+			)
+		);
+
+		$this->assertSame( 422, $response->get_status() );
+		$this->assertSame( 'aiwr_image_unreadable', $response->get_data()['code'] );
+		$this->assertFalse( $this->provider_called );
+	}
+
+	public function test_alt_text_rejects_non_image_attachment() {
+		$file = wp_tempnam( 'aiwr-note.txt' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture on the local filesystem.
+		file_put_contents( $file, 'plain text, not an image' );
+		$attachment_id = self::factory()->attachment->create_upload_object( $file );
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'alt_text',
+				'input'  => array( 'attachment_id' => $attachment_id ),
+			)
+		);
+
+		$this->assertSame( 422, $response->get_status() );
+		$this->assertSame( 'aiwr_image_unreadable', $response->get_data()['code'] );
+	}
+
+	public function test_alt_text_success_truncates_to_150() {
+		$attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+		$this->mock_provider_content( str_repeat( 'A vivid description of the scene. ', 20 ) );
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array(
+				'action' => 'alt_text',
+				'input'  => array( 'attachment_id' => $attachment_id ),
+			)
+		);
+
+		$data = $response->get_data();
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $this->provider_called );
+		$this->assertLessThanOrEqual( 150, mb_strlen( $data['result']['alt_text'] ) );
+	}
+
 	/**
 	 * Count log rows with a given status.
 	 *
