@@ -9,11 +9,13 @@ import {
 	Spinner,
 	Notice,
 } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
+import { useSelect, useDispatch } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
+import { store as blockEditorStore } from '@wordpress/block-editor';
 import { speak } from '@wordpress/a11y';
 
 import { generate } from '../api/client';
+import { htmlToBlocks } from '../utils/blocks';
 import ResultPreview from '../components/result-preview';
 
 const MAX_PROMPT = 2000;
@@ -29,6 +31,7 @@ export default function DraftPanel() {
 		( select ) => select( editorStore ).getCurrentPostId(),
 		[]
 	);
+	const { insertBlocks } = useDispatch( blockEditorStore );
 
 	const length = prompt.trim().length;
 	const tooLong = prompt.length > MAX_PROMPT;
@@ -70,6 +73,15 @@ export default function DraftPanel() {
 			setBusy( false );
 			setStreaming( false );
 		}
+	}
+
+	function onInsert() {
+		const blocks = htmlToBlocks( preview );
+		if ( blocks.length ) {
+			insertBlocks( blocks );
+			speak( __( 'Draft inserted into the post.', 'wp-ai-writer' ) );
+		}
+		setPreview( '' );
 	}
 
 	const isNotice = error && 'aiwr_not_configured' === error.code;
@@ -132,6 +144,7 @@ export default function DraftPanel() {
 			<ResultPreview
 				text={ preview }
 				isStreaming={ streaming }
+				onInsert={ onInsert }
 				onDiscard={ () => setPreview( '' ) }
 				insertLabel={ __( 'Insert into post', 'wp-ai-writer' ) }
 			/>
