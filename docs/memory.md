@@ -26,9 +26,15 @@ every non-obvious decision with its reason.
   config layers on the wp-scripts defaults and disables import-resolution for the externalized
   @wordpress/* packages.
 
+- Phase 3 complete: rewrite (tone/length presets, selected-block text extraction, replace block via
+  replaceBlocks), SEO (JSON-object provider output parsed and truncated server-side to 60/160, copy
+  buttons, use-as-title), excerpt (streamed summary, apply-to-excerpt). Server-side validation
+  truncates seo/excerpt content over cap and rejects other violations. Prompt-builder tests plus
+  rewrite/seo/excerpt dispatch tests (truncation, validation). JS suite 20/20.
+
 ## In progress
 
-- Phase 3 next: rewrite, SEO, and excerpt actions.
+- Phase 4 next: alt text action.
 
 ## Decisions log
 
