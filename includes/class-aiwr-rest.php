@@ -86,6 +86,12 @@ class AIWR_Rest {
 			return $valid;
 		}
 
+		$rate_limit = AIWR_Limits::check_rate_limit( get_current_user_id() );
+
+		if ( is_wp_error( $rate_limit ) ) {
+			return $rate_limit;
+		}
+
 		$prompt = AIWR_Prompts::build( $action, $valid['input'], $valid['options'] );
 
 		if ( is_wp_error( $prompt ) ) {
