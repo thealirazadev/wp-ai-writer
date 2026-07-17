@@ -78,6 +78,7 @@ require_once AIWR_PATH . 'includes/class-aiwr-prompts.php';
 require_once AIWR_PATH . 'includes/class-aiwr-provider.php';
 require_once AIWR_PATH . 'includes/class-aiwr-rest.php';
 require_once AIWR_PATH . 'includes/class-aiwr-settings.php';
+require_once AIWR_PATH . 'includes/class-aiwr-log-table.php';
 require_once AIWR_PATH . 'includes/class-aiwr-log-screen.php';
 require_once AIWR_PATH . 'includes/class-aiwr-plugin.php';
 

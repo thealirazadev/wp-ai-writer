@@ -106,4 +106,44 @@ class AIWR_Log {
 			'output_tokens' => isset( $found['output_tokens'] ) ? (int) $found['output_tokens'] : 0,
 		);
 	}
+
+	/**
+	 * Total number of log rows.
+	 *
+	 * @return int
+	 */
+	public static function total_count() {
+		global $wpdb;
+
+		$table = self::table();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+	}
+
+	/**
+	 * Fetch a page of log rows, newest first.
+	 *
+	 * @param int $per_page Rows per page.
+	 * @param int $offset   Row offset.
+	 * @return array[] Row arrays.
+	 */
+	public static function get_page( $per_page, $offset ) {
+		global $wpdb;
+
+		$table = self::table();
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- custom table, paginated admin read, table name is not user input.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} ORDER BY id DESC LIMIT %d OFFSET %d",
+				max( 1, (int) $per_page ),
+				max( 0, (int) $offset )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return is_array( $rows ) ? $rows : array();
+	}
 }

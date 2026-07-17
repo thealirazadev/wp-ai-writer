@@ -20,6 +20,7 @@ class AIWR_Plugin {
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		( new AIWR_Settings() )->register();
+		( new AIWR_Log_Screen() )->register();
 
 		add_action( 'rest_api_init', array( new AIWR_Rest(), 'register_routes' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ) );
