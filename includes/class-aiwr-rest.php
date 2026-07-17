@@ -92,6 +92,12 @@ class AIWR_Rest {
 			return $rate_limit;
 		}
 
+		$budget = AIWR_Limits::check_budget();
+
+		if ( is_wp_error( $budget ) ) {
+			return $budget;
+		}
+
 		$prompt = AIWR_Prompts::build( $action, $valid['input'], $valid['options'] );
 
 		if ( is_wp_error( $prompt ) ) {
