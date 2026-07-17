@@ -81,4 +81,6 @@ require_once AIWR_PATH . 'includes/class-aiwr-settings.php';
 require_once AIWR_PATH . 'includes/class-aiwr-log-screen.php';
 require_once AIWR_PATH . 'includes/class-aiwr-plugin.php';
 
+register_activation_hook( AIWR_PLUGIN_FILE, array( 'AIWR_Migrations', 'maybe_upgrade' ) );
+
 ( new AIWR_Plugin() )->run();
