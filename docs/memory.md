@@ -38,9 +38,22 @@ every non-obvious decision with its reason.
   block, returns alt_text truncated to 150. Missing/unsupported/oversized -> aiwr_image_unreadable
   (422) with no provider call. JS suite 23/23; PHP image-validation tests added.
 
+- Phase 5 complete: Tools > AI Writer Log screen (WP_List_Table, 20/page, newest first,
+  manage_options only, metadata only); uninstall.php drops the log table and deletes settings,
+  usage, db-version, and aiwr_rl_* transients; script translations loaded from the languages dir;
+  languages/wp-ai-writer.pot generated (120 strings, PHP + JS, no vendor names) with wp-cli 2.12.
+  Log query + migration + uninstall tests added.
+- All five phases done. Full quality gate green: composer run lint (phpcs, exit 0), php -l on every
+  file, npm run lint:js, npm run test:unit (Jest 23/23), npm run build. PHPUnit suite authored to
+  the WP test-suite contract but not executable here (no docker compose / no DB); runs under wp-env.
+  47 commits, author Ali Raza, no remotes, no attribution trailers, no emoji, no vendor names.
+
 ## In progress
 
-- Phase 5 next: activity log admin screen, i18n, uninstall, hardening.
+- Implementation complete. Remaining work is human-only: run the PHPUnit suite under wp-env on a
+  host with docker compose + a DB, do the manual editor QA per docs/phases.md and
+  docs/launch-checklist.md, and run one live-provider smoke test with a real key and
+  AIWR_PROVIDER_ENDPOINT.
 
 ## Decisions log
 
@@ -84,3 +97,9 @@ every non-obvious decision with its reason.
   `@wordpress/scripts/config/eslint.config.cjs` and turns off import/no-unresolved and
   import/no-extraneous-dependencies, since the @wordpress/* packages are runtime-provided, not
   installed.
+- WPCS enforces one class per file, so the WP_List_Table subclass lives in
+  includes/class-aiwr-log-table.php (not listed in the original tree) and is required lazily inside
+  the admin screen render, so admin list-table code never loads on the front end.
+- build/ is gitignored (wp-scripts output); a release must ship a built build/ dir. The asset
+  enqueue guards on build/index.asset.php existing, so a raw checkout without `npm run build` simply
+  does not load the sidebar rather than fataling.
