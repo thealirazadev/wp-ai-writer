@@ -40,6 +40,8 @@ class AIWR_Log_Screen {
 			return;
 		}
 
+		require_once AIWR_PATH . 'includes/class-aiwr-log-table.php';
+
 		$table = new AIWR_Log_Table();
 		$table->prepare_items();
 		?>
