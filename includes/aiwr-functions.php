@@ -39,3 +39,18 @@ function aiwr_log( $event, array $context = array() ) {
 	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	error_log( 'aiwr ' . $encoded );
 }
+
+/**
+ * Read the plugin settings, merged over the defaults.
+ *
+ * @return array{api_key:string,model:string,monthly_budget_tokens:int,price_input_per_mtok:float,price_output_per_mtok:float}
+ */
+function aiwr_get_settings() {
+	$stored = get_option( AIWR_Settings::OPTION, array() );
+
+	if ( ! is_array( $stored ) ) {
+		$stored = array();
+	}
+
+	return wp_parse_args( $stored, AIWR_Settings::defaults() );
+}

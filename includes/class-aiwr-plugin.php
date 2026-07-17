@@ -18,6 +18,8 @@ class AIWR_Plugin {
 	public function run() {
 		add_action( 'plugins_loaded', array( 'AIWR_Migrations', 'maybe_upgrade' ) );
 		add_action( 'init', array( $this, 'load_textdomain' ) );
+
+		( new AIWR_Settings() )->register();
 	}
 
 	/**
