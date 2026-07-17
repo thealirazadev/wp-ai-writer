@@ -20,6 +20,8 @@ class AIWR_Plugin {
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		( new AIWR_Settings() )->register();
+
+		add_action( 'rest_api_init', array( new AIWR_Rest(), 'register_routes' ) );
 	}
 
 	/**
