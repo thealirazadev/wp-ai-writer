@@ -69,6 +69,7 @@ class AIWR_Rest {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function generate( WP_REST_Request $request ) {
+		$started  = microtime( true );
 		$settings = aiwr_get_settings();
 
 		if ( '' === $settings['api_key'] || '' === $settings['model'] ) {
@@ -113,11 +114,36 @@ class AIWR_Rest {
 		);
 
 		if ( is_wp_error( $result ) ) {
+			AIWR_Log::record(
+				array(
+					'user_id'     => get_current_user_id(),
+					'action'      => $action,
+					'model'       => $settings['model'],
+					'status'      => 'provider_error',
+					'duration_ms' => $this->elapsed_ms( $started ),
+				)
+			);
+
 			return $result;
 		}
 
 		$usage = $result['usage'];
 		$cost  = $this->cost_estimate( $usage, $settings );
+
+		AIWR_Log::record(
+			array(
+				'user_id'       => get_current_user_id(),
+				'action'        => $action,
+				'model'         => $settings['model'],
+				'input_tokens'  => $usage['input_tokens'],
+				'output_tokens' => $usage['output_tokens'],
+				'cost_estimate' => $cost,
+				'status'        => 'success',
+				'duration_ms'   => $this->elapsed_ms( $started ),
+			)
+		);
+
+		AIWR_Limits::add_usage( $usage['input_tokens'], $usage['output_tokens'] );
 
 		return rest_ensure_response(
 			array(
@@ -127,6 +153,16 @@ class AIWR_Rest {
 				'cost_estimate' => $cost,
 			)
 		);
+	}
+
+	/**
+	 * Milliseconds elapsed since a microtime marker.
+	 *
+	 * @param float $started microtime( true ) marker.
+	 * @return int
+	 */
+	private function elapsed_ms( $started ) {
+		return (int) round( ( microtime( true ) - $started ) * 1000 );
 	}
 
 	/**
