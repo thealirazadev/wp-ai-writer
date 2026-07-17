@@ -4,6 +4,8 @@
 import { __ } from '@wordpress/i18n';
 import { TabPanel, Notice } from '@wordpress/components';
 
+import DraftPanel from './actions/draft';
+
 const ACTIONS = [
 	{ name: 'draft', title: __( 'Draft', 'wp-ai-writer' ) },
 	{ name: 'rewrite', title: __( 'Rewrite', 'wp-ai-writer' ), disabled: true },
@@ -27,11 +29,7 @@ function ComingSoon() {
 function renderPanel( name ) {
 	switch ( name ) {
 		case 'draft':
-			return (
-				<p className="aiwr-panel__placeholder">
-					{ __( 'Draft', 'wp-ai-writer' ) }
-				</p>
-			);
+			return <DraftPanel />;
 		default:
 			return <ComingSoon />;
 	}
