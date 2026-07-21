@@ -48,8 +48,8 @@ every non-obvious decision with its reason.
   the WP test-suite contract but not executable here (no docker compose / no DB); runs under wp-env.
   47 commits, author Ali Raza, no remotes, no attribution trailers, no emoji, no vendor names.
 
-- Repo hygiene: `LICENSE` (MIT, Ali Raza, 2026) added at the root and `.github/workflows/ci.yml`
-  added. CI runs on push and pull_request to main as two jobs: PHP 8.2 (composer validate, composer
+- Repo hygiene: `LICENSE` (GPL-2.0, matching the plugin header) added at the root and
+  `.github/workflows/ci.yml` added. CI runs on push and pull_request to main as two jobs: PHP 8.2 (composer validate, composer
   install, `php -l` over every non-vendor PHP file, `composer run lint`) and Node 24 (`npm ci`,
   `npm run lint:js`, `npm run test:unit`, `npm run build`). Both green on GitHub Actions.
 
@@ -109,9 +109,10 @@ every non-obvious decision with its reason.
   REST requests, so it needs the WordPress core test suite plus a live MySQL database; this plugin
   provisions those through wp-env (docker compose), which a plain hosted runner does not have. It
   stays a local/WP-capable-host step, and the workflow carries a comment saying so.
-- LICENSE at the root is MIT, per the repo-level request. Note this differs from the GPL-2.0-or-later
-  declared in the plugin header, readme.txt, composer.json, and package.json (the WordPress plugin
-  convention). Those files were left untouched; the mismatch needs an owner decision.
+- LICENSE at the root is the canonical GNU GPL-2.0 text, matching the GPL-2.0-or-later already
+  declared in the plugin header, readme.txt, composer.json, and package.json. An MIT file was added
+  first and replaced: MIT would contradict the plugin's own declared license and WordPress.org
+  distribution expects GPL. Those four declarations were left untouched.
 - build/ is gitignored (wp-scripts output); a release must ship a built build/ dir. The asset
   enqueue guards on build/index.asset.php existing, so a raw checkout without `npm run build` simply
   does not load the sidebar rather than fataling.
