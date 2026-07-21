@@ -130,6 +130,11 @@ class AIWR_Test_Log extends WP_UnitTestCase {
 			define( 'WP_UNINSTALL_PLUGIN', 'wp-ai-writer/wp-ai-writer.php' );
 		}
 
+		// The test case rewrites CREATE/DROP TABLE into their TEMPORARY forms, which would turn the
+		// uninstall drop into a no-op against the real table and quietly pass the assertion below.
+		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+
 		require dirname( __DIR__ ) . '/uninstall.php';
 
 		$this->assertFalse( get_option( 'aiwr_settings' ) );
