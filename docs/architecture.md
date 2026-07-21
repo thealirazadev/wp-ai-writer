@@ -86,7 +86,9 @@ wp-ai-writer/
   composer.json                    Dev deps + scripts (lint, lint:fix, test)
   phpcs.xml.dist                   PHPCS ruleset (WordPress-Extra + WordPress-Docs, aiwr prefix)
   phpunit.xml.dist                 PHPUnit config
-  package.json                     wp-scripts build/start/lint/test scripts (lockfile committed)
+  package.json                     wp-scripts build/start/lint/test scripts, security overrides
+                                   for transitive dev deps (lockfile committed)
+  webpack.config.js                Stock wp-scripts config with devServer.proxy in array form
   .wp-env.json                     Local WordPress environment config
   .gitignore                       /build, /node_modules, /vendor
 
@@ -141,10 +143,14 @@ wp-ai-writer/
 - WordPress plugin, PHP 8.1+, WordPress 6.6+: the sidebar uses `PluginSidebar` from
   `@wordpress/editor` (its home since 6.6). Exact dependency versions are pinned at install time
   and both lockfiles are committed.
-- `@wordpress/scripts` build with plain JavaScript (JSX): the officially maintained toolchain, zero
-  custom webpack. TypeScript is skipped deliberately — one small app, one REST endpoint, no complex
-  data model; stock wp-scripts defaults keep the build boring. (The container's `wp-blocks-starter`
-  uses TS because types document a block-attribute API; that rationale does not apply here.)
+- `@wordpress/scripts` build with plain JavaScript (JSX): the officially maintained toolchain, no
+  custom build pipeline. TypeScript is skipped deliberately — one small app, one REST endpoint, no
+  complex data model; stock wp-scripts defaults keep the build boring. (The container's
+  `wp-blocks-starter` uses TS because types document a block-attribute API; that rationale does not
+  apply here.) The one deviation from "stock" is `webpack.config.js`, which re-exports the wp-scripts
+  config with `devServer.proxy` converted to the array form; wp-scripts 33 still emits the
+  webpack-dev-server 4 object form, which the security-pinned v5 rejects. It touches nothing the
+  production build uses and is removed once wp-scripts ships a v5-compatible devServer.
 - React via `@wordpress/element` and UI via `@wordpress/components` (`PanelBody`, `TextareaControl`,
   `SelectControl`, `Button`, `Notice`, `Spinner`): matches the editor's look, accessibility, and
   future compatibility for free.
@@ -226,7 +232,12 @@ WordPress once applied.
   `element`, `components`, `data`, `blocks` (rawHandler), `block-editor`, `i18n`, `a11y`.
 - Dev dependencies: `@wordpress/scripts`, `@wordpress/env` (npm); `wp-coding-standards/wpcs`,
   `squizlabs/php_codesniffer`, `phpunit/phpunit`, `yoast/phpunit-polyfills` (composer). Exact
-  versions pinned at install time; lockfiles committed.
+  versions pinned at install time; lockfiles committed. The plugin ships no npm runtime
+  dependencies, so the whole npm tree is build-time only and none of it reaches a site visitor.
+  Advisories against packages buried under the two wp-* toolchains are therefore cleared with
+  `overrides` in `package.json` rather than by moving off the toolchain: both are already on their
+  latest release, and forcing the patched transitive version is the only way to reach it. Each
+  override is dropped once the parent ships the fix itself.
 - Environment variables: none in production — configuration is entered on the settings page.
   `.env.example` documents local-dev-only values (a dev provider key, a mock endpoint override, a
   model string) used when testing with `wp-env`; see that file.

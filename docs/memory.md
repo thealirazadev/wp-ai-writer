@@ -76,6 +76,13 @@ every non-obvious decision with its reason.
   `.github/dependabot.yml` (grouped, monthly, for composer, npm, and github-actions). README gained
   CI and license badges and a "Design decisions" section covering the six load-bearing trade-offs.
 
+- Dependency security pass. `composer audit` was already clean; every finding was npm-side and
+  every one of them was a dev-only transitive package. Dependabot reported 13 open alerts (4 high,
+  9 moderate) but `npm audit` reported 31 (9 high, 22 moderate) against the same tree, so the
+  ecosystem tool was treated as authoritative and the extra findings (`fast-uri`, the
+  `@opentelemetry/core` cascade, two further `minimatch` advisories, one further `linkify-it`
+  advisory) were fixed too. Result: `npm audit` 0 and `composer audit` 0.
+
 ## In progress
 
 - Implementation complete. Remaining work is human-only: manual editor QA per docs/phases.md and
@@ -154,6 +161,41 @@ every non-obvious decision with its reason.
   request's tokens each. Closing that needs a lock held across a 60-120s provider call, which costs
   more than the soft cost guardrail is worth; the counter is never under-counted now, so the budget
   always stops the next request.
+- Security advisories in the npm tree are cleared with `overrides` in `package.json`, not by
+  changing the toolchain. `@wordpress/scripts` (33.0.0) and `@wordpress/env` (11.11.0) are both
+  already the latest release, so every vulnerable package sits below a parent that has not yet
+  shipped the fix. `npm audit fix --force` proposed downgrading `@wordpress/scripts` from 33.0.0 to
+  19.2.4 and `@wordpress/env` from 11.11.0 to 11.8.0; that was rejected outright — reverting the
+  build toolchain by fourteen majors to silence dev-only advisories trades a real problem for a
+  bigger one. Overrides in place: `adm-zip` 0.6.0, `lighthouse` 13.4.1, `linkify-it` 5.0.2,
+  `markdown-it` 14.2.0, `minimatch@<3.1.4` -> 3.1.4, `serialize-javascript` 7.0.5, `uuid` 11.1.1,
+  `webpack-dev-server` 5.2.6. Each is the lowest version that clears its advisory. The
+  `minimatch@<3.1.4` selector form matters: a bare `minimatch` override would have dragged the
+  healthy 9.x and 10.x copies elsewhere in the tree down to a 3.x release, so the selector confines
+  the change to the single vulnerable node under `markdownlint-cli`.
+- `ARCHITECTURE CHANGED` — "zero custom webpack" no longer holds. webpack-dev-server 5 validates
+  `devServer.proxy` as an array and rejects the object form that wp-scripts 33 still emits, so
+  pinning 5.2.6 made `wp-scripts start --hot` die at schema validation ("options.proxy should be an
+  array") while `build` and `start` without `--hot` were unaffected, because those never construct a
+  dev server. Rather than leave six webpack-dev-server advisories open — they are the ones that
+  actually target a developer's machine, exposing project source to any malicious page visited while
+  the dev server runs — the repo now has a root `webpack.config.js` that re-exports the stock
+  wp-scripts config with the proxy normalised. It reproduces exactly what v4 did internally, so
+  behaviour is unchanged. `docs/architecture.md` was updated to match. Delete the file once
+  wp-scripts ships a v5-compatible devServer.
+- `@opentelemetry/core` was fixed by pinning `lighthouse` to 13.4.1 rather than by overriding the
+  otel package directly. The vulnerable copy sits under `@sentry/node` 9, whose sibling otel
+  packages are all on the 1.x line; forcing core alone to 2.x would have left a tree that mixes otel
+  1.x and 2.x, which is exactly the combination those packages do not support. lighthouse 13.4.1 is
+  the lowest release outside the advisory range and pulls a coherent `@sentry/node` 10 + otel 2.x
+  subtree. This whole chain reaches the project through
+  `@wordpress/e2e-test-utils-playwright`, which the plugin never invokes (there are no e2e tests and
+  no playwright script).
+- `yoast/phpunit-polyfills` 2.0.5 -> 4.0.0 was verified by running the PHPUnit suite, not by CI.
+  CI deliberately skips `composer run test`, so the green check on the Dependabot PR proved only
+  that lint passed; the bump could have silently broken every integration test. Polyfills 4.0 still
+  declares `phpunit/phpunit ^9.0` and the WP bootstrap only enforces a floor of 1.1.0, and the suite
+  stayed at 48 tests / 147 assertions.
 - The `alt_text` capability check uses `edit_post` on the attachment, which is deliberately strict:
   an author cannot generate alt text for library media uploaded by someone else, because
   `edit_post` on an attachment requires `edit_others_posts` for non-owners. Chosen over the looser
