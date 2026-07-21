@@ -19,6 +19,7 @@
   },
   "overrides": {
     "adm-zip": "0.6.0",
+    "lighthouse": "13.4.1",
     "linkify-it": "5.0.2",
     "markdown-it": "14.2.0",
     "minimatch@<3.1.4": "3.1.4",
