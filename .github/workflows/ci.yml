@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHP 8.2 lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate composer files
+        run: composer validate --no-check-publish
+
+      - name: Install composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Syntax check every PHP file
+        run: |
+          find . -path ./vendor -prune -o -path ./node_modules -prune -o \
+            -path ./build -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l
+
+      - name: PHPCS
+        run: composer run lint
+
+      # The PHPUnit suite (composer run test) is intentionally not run here. Its
+      # tests extend WP_UnitTestCase and dispatch REST requests, so they need the
+      # WordPress core test suite plus a live MySQL database, which this plugin
+      # provisions through wp-env (docker compose). Run it locally or on a
+      # WP-capable host with `npx wp-env start` followed by `composer run test`.
+
+  js:
+    name: Node 24 lint, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint:js
+
+      - name: Jest unit tests
+        run: npm run test:unit
+
+      - name: Build
+        run: npm run build
