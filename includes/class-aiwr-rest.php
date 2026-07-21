@@ -485,12 +485,26 @@ class AIWR_Rest {
 	/**
 	 * Load, validate, and base64-encode a local attachment for the provider's image input.
 	 *
+	 * The attachment ID comes from the request body, so it needs its own object-level capability
+	 * check: the route's edit_post check only covers the optional post_id. Without this, any user
+	 * with edit_posts could have the site read and describe media they cannot edit.
+	 *
 	 * @param int $attachment_id Attachment ID.
-	 * @return array{mime:string,data:string}|WP_Error aiwr_image_unreadable (422) on any failure.
+	 * @return array{mime:string,data:string}|WP_Error rest_forbidden (403) when the user may not edit
+	 *                                                 the attachment, aiwr_image_unreadable (422)
+	 *                                                 on any other failure.
 	 */
 	private function load_attachment_image( $attachment_id ) {
 		if ( 'attachment' !== get_post_type( $attachment_id ) ) {
 			return $this->image_error();
+		}
+
+		if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You are not allowed to use that image.', 'wp-ai-writer' ),
+				array( 'status' => rest_authorization_required_code() )
+			);
 		}
 
 		$path = get_attached_file( $attachment_id );

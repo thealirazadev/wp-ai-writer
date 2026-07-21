@@ -427,6 +427,29 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertSame( 'aiwr_image_unreadable', $response->get_data()['code'] );
 	}
 
+	public function test_alt_text_rejects_an_attachment_the_user_cannot_edit() {
+		$owner = $this->editor_id();
+		wp_set_current_user( $owner );
+		$attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+		$this->mock_provider_content( 'a description that must never be produced' );
+
+		// A contributor has edit_posts, so it clears the route, but not edit_others_posts.
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+
+		$response = $this->dispatch_draft(
+			$contributor,
+			array(
+				'action' => 'alt_text',
+				'input'  => array( 'attachment_id' => $attachment_id ),
+			)
+		);
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'rest_forbidden', $response->get_data()['code'] );
+		$this->assertFalse( $this->provider_called );
+	}
+
 	public function test_alt_text_success_truncates_to_150() {
 		$attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
 		$this->mock_provider_content( str_repeat( 'A vivid description of the scene. ', 20 ) );
