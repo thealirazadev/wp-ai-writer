@@ -283,8 +283,15 @@ class AIWR_Rest {
 
 	/**
 	 * Send the event-stream headers and disable output buffering and compression.
+	 *
+	 * User aborts are ignored deliberately. PHP would otherwise kill the script at the first flush
+	 * after the browser goes away, which happens mid-relay whenever an editor closes the tab. The
+	 * provider has already been billed for those tokens, so dying there would skip both the activity
+	 * log row and the monthly usage counter, letting repeated cancels run past the token budget.
 	 */
 	private function send_stream_headers() {
+		ignore_user_abort( true );
+
 		if ( function_exists( 'apache_setenv' ) ) {
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_apache_setenv, WordPress.PHP.NoSilencedErrors.Discouraged
 			@apache_setenv( 'no-gzip', '1' );
