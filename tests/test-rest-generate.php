@@ -410,10 +410,15 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 	}
 
 	public function test_alt_text_rejects_non_image_attachment() {
-		$file = wp_tempnam( 'aiwr-note.txt' );
+		// The basename drives the upload, and wp_tempnam() would hand back a .tmp name that
+		// wp_upload_bits() refuses, so no attachment would be created to reject.
+		$file = trailingslashit( get_temp_dir() ) . 'aiwr-note.txt';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture on the local filesystem.
 		file_put_contents( $file, 'plain text, not an image' );
 		$attachment_id = self::factory()->attachment->create_upload_object( $file );
+
+		$this->assertIsInt( $attachment_id );
+		$this->assertSame( 'text/plain', get_post_mime_type( $attachment_id ) );
 
 		$response = $this->dispatch_draft(
 			$this->editor_id(),
