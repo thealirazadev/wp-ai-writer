@@ -53,11 +53,33 @@ every non-obvious decision with its reason.
   install, `php -l` over every non-vendor PHP file, `composer run lint`) and Node 24 (`npm ci`,
   `npm run lint:js`, `npm run test:unit`, `npm run build`). Both green on GitHub Actions.
 
+- Senior quality pass (security review). The PHPUnit suite was executed for the first time and is
+  now green at 48 tests / 147 assertions. Three real defects found and fixed, each with a test:
+  1. `alt_text` accepted any `attachment_id` with only the blanket `edit_posts` check, so a
+     contributor could have the site read and describe media they cannot edit. Proven before the
+     fix: the route returned 200 with a description of another user's attachment. Now requires
+     `current_user_can( 'edit_post', $attachment_id )` and returns 403.
+  2. The SSE relay had no client-disconnect handling. PHP kills the script at the first flush after
+     the browser goes away, which skipped both the log row and the usage counter, so repeated
+     cancels ran past the token budget. `ignore_user_abort( true )` now keeps the relay alive to
+     settle its accounting.
+  3. The monthly usage counter double counted. `add_usage()` called `get_current_usage()`, which
+     recomputes from the log when the counter is missing or stale — a log that already contained
+     the row just written — and then added the same tokens again. Measured end to end: a request
+     the provider reported as 120/60 was recorded as 240/120.
+  Also fixed two tests that had never run and could not pass: the non-image attachment fixture used
+  `wp_tempnam()` (a `.tmp` name that `wp_upload_bits()` refuses, so no attachment was created and
+  the mime-rejection path was never verified), and the uninstall test was defeated by the test
+  case's `DROP TABLE` -> `DROP TEMPORARY TABLE` rewrite, so it asserted against a table the
+  uninstall never dropped.
+- Repo hygiene: `SECURITY.md` (reporting process plus the security properties that define scope) and
+  `.github/dependabot.yml` (grouped, monthly, for composer, npm, and github-actions). README gained
+  CI and license badges and a "Design decisions" section covering the six load-bearing trade-offs.
+
 ## In progress
 
-- Implementation complete. Remaining work is human-only: run the PHPUnit suite under wp-env on a
-  host with docker compose + a DB, do the manual editor QA per docs/phases.md and
-  docs/launch-checklist.md, and run one live-provider smoke test with a real key and
+- Implementation complete. Remaining work is human-only: manual editor QA per docs/phases.md and
+  docs/launch-checklist.md, and one live-provider smoke test with a real key and
   AIWR_PROVIDER_ENDPOINT.
 
 ## Decisions log
@@ -116,3 +138,24 @@ every non-obvious decision with its reason.
 - build/ is gitignored (wp-scripts output); a release must ship a built build/ dir. The asset
   enqueue guards on build/index.asset.php existing, so a raw checkout without `npm run build` simply
   does not load the sidebar rather than fataling.
+- ENVIRONMENT FALLBACK SUPERSEDED: the PHPUnit suite IS runnable here, and `wp-env` is still not.
+  `docker compose` v2 now exists on this host, but `npx wp-env start` never finishes bringing up its
+  WordPress containers. The suite does not need wp-env: point `WP_TESTS_DIR` at a WordPress test
+  suite provisioned by hand (extract wordpress-develop's `tests/phpunit/includes` + `data`, copy
+  `wp-tests-config-sample.php` to `wp-tests-config.php`, set ABSPATH to a WordPress core checkout,
+  and aim DB_HOST at any MySQL/MariaDB). Verified against WP 6.8.2 with PHPUnit 9.6. Run it before
+  touching REST, limits, or log code — the suite caught real defects the static gate cannot.
+- `AIWR_Limits::add_usage( $in, $out )` became `AIWR_Limits::refresh_usage()`. The counter is now
+  recomputed from the activity log (already documented as the source of truth) after each request
+  rather than incremented. This removes the double count when the counter is missing or stale, and
+  it also means two requests finishing together cannot clobber each other's increment. The remaining
+  budget looseness is the inherent check-then-act overshoot: a request that passes `check_budget()`
+  still runs to completion, so concurrent requests can collectively exceed the cap by roughly one
+  request's tokens each. Closing that needs a lock held across a 60-120s provider call, which costs
+  more than the soft cost guardrail is worth; the counter is never under-counted now, so the budget
+  always stops the next request.
+- The `alt_text` capability check uses `edit_post` on the attachment, which is deliberately strict:
+  an author cannot generate alt text for library media uploaded by someone else, because
+  `edit_post` on an attachment requires `edit_others_posts` for non-owners. Chosen over the looser
+  `upload_files` (core's media-library browse gate) because failing closed here only costs a manual
+  alt-text entry. Revisit if the author workflow proves to matter in real use.
