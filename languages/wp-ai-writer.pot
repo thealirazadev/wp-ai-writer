@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-17T23:37:18+00:00\n"
+"POT-Creation-Date: 2026-07-21T22:39:41+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-ai-writer\n"
@@ -53,7 +53,7 @@ msgstr ""
 msgid "AI Writer Log"
 msgstr ""
 
-#: includes/class-aiwr-log-screen.php:48
+#: includes/class-aiwr-log-screen.php:50
 msgid "Every request is recorded as metadata only. No prompt or response content is stored."
 msgstr ""
 
@@ -114,7 +114,7 @@ msgid "Aborted"
 msgstr ""
 
 #: includes/class-aiwr-prompts.php:42
-#: includes/class-aiwr-rest.php:345
+#: includes/class-aiwr-rest.php:350
 msgid "That action is not available."
 msgstr ""
 
@@ -139,43 +139,47 @@ msgstr ""
 msgid "The writing assistant is not configured yet. Ask an administrator to add the provider key and model."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:359
+#: includes/class-aiwr-rest.php:364
 msgid "Enter a prompt to generate a draft."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:363
+#: includes/class-aiwr-rest.php:368
 msgid "The prompt must be 2000 characters or fewer."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:384
+#: includes/class-aiwr-rest.php:389
 msgid "Select a block with text to rewrite."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:388
+#: includes/class-aiwr-rest.php:393
 msgid "The selected text must be 8000 characters or fewer."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:396
+#: includes/class-aiwr-rest.php:401
 msgid "Choose a valid tone."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:400
+#: includes/class-aiwr-rest.php:405
 msgid "Choose a valid length."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:427
+#: includes/class-aiwr-rest.php:432
 msgid "Add some content to the post before generating SEO text."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:453
+#: includes/class-aiwr-rest.php:458
 msgid "Add some content to the post before generating an excerpt."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:476
+#: includes/class-aiwr-rest.php:481
 msgid "Select an image to describe."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:537
+#: includes/class-aiwr-rest.php:510
+msgid "You are not allowed to use that image."
+msgstr ""
+
+#: includes/class-aiwr-rest.php:556
 msgid "That image could not be read. It may be missing, too large, or an unsupported type."
 msgstr ""
 
