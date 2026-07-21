@@ -90,17 +90,27 @@ class AIWR_Limits {
 	}
 
 	/**
-	 * Add token usage to the current-month counter after a completed request.
+	 * Refresh the current-month counter from the activity log after a completed request.
 	 *
-	 * @param int $input_tokens  Input tokens used.
-	 * @param int $output_tokens Output tokens used.
+	 * Callers record the log row first, so the row for this request is already included. Reading the
+	 * total back from the log rather than incrementing the cached value keeps two things honest:
+	 * a request that lands while the counter is missing or from a stale month is not counted twice
+	 * (the recompute already contains it), and two requests finishing together cannot clobber each
+	 * other's increment, which would silently under-count usage against the budget.
 	 */
-	public static function add_usage( $input_tokens, $output_tokens ) {
-		$usage                   = self::get_current_usage();
-		$usage['input_tokens']  += max( 0, (int) $input_tokens );
-		$usage['output_tokens'] += max( 0, (int) $output_tokens );
+	public static function refresh_usage() {
+		$month = gmdate( 'Y-m' );
+		$sum   = AIWR_Log::monthly_sum( $month );
 
-		update_option( self::USAGE_OPTION, $usage, false );
+		update_option(
+			self::USAGE_OPTION,
+			array(
+				'month'         => $month,
+				'input_tokens'  => $sum['input_tokens'],
+				'output_tokens' => $sum['output_tokens'],
+			),
+			false
+		);
 	}
 
 	/**

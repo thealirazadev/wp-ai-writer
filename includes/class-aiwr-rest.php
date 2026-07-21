@@ -158,7 +158,7 @@ class AIWR_Rest {
 			)
 		);
 
-		AIWR_Limits::add_usage( $usage['input_tokens'], $usage['output_tokens'] );
+		AIWR_Limits::refresh_usage();
 
 		return rest_ensure_response(
 			array(
@@ -245,9 +245,7 @@ class AIWR_Rest {
 				)
 			);
 
-			if ( $saw_delta ) {
-				AIWR_Limits::add_usage( 0, $estimated_output );
-			}
+			AIWR_Limits::refresh_usage();
 
 			exit;
 		}
@@ -276,7 +274,7 @@ class AIWR_Rest {
 			)
 		);
 
-		AIWR_Limits::add_usage( $usage['input_tokens'], $usage['output_tokens'] );
+		AIWR_Limits::refresh_usage();
 
 		exit;
 	}

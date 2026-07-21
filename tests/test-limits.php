@@ -116,14 +116,72 @@ class AIWR_Test_Limits extends WP_UnitTestCase {
 		$this->assertTrue( AIWR_Limits::check_budget() );
 	}
 
-	public function test_add_usage_increments_the_counter() {
-		AIWR_Limits::add_usage( 100, 50 );
-		AIWR_Limits::add_usage( 10, 5 );
+	public function test_refresh_usage_totals_the_logged_rows() {
+		AIWR_Log::record(
+			array(
+				'input_tokens'  => 100,
+				'output_tokens' => 50,
+				'status'        => 'success',
+			)
+		);
+		AIWR_Limits::refresh_usage();
+
+		AIWR_Log::record(
+			array(
+				'input_tokens'  => 10,
+				'output_tokens' => 5,
+				'status'        => 'success',
+			)
+		);
+		AIWR_Limits::refresh_usage();
 
 		$usage = AIWR_Limits::get_current_usage();
 		$this->assertSame( 110, $usage['input_tokens'] );
 		$this->assertSame( 55, $usage['output_tokens'] );
 		$this->assertSame( gmdate( 'Y-m' ), $usage['month'] );
+	}
+
+	public function test_refresh_usage_does_not_double_count_a_missing_counter() {
+		// The counter cache is absent, so the recompute already contains the row just logged.
+		delete_option( AIWR_Limits::USAGE_OPTION );
+
+		AIWR_Log::record(
+			array(
+				'input_tokens'  => 120,
+				'output_tokens' => 60,
+				'status'        => 'success',
+			)
+		);
+		AIWR_Limits::refresh_usage();
+
+		$usage = AIWR_Limits::get_current_usage();
+		$this->assertSame( 120, $usage['input_tokens'] );
+		$this->assertSame( 60, $usage['output_tokens'] );
+	}
+
+	public function test_concurrent_refreshes_cannot_lose_an_update() {
+		// Two requests finishing together each read the counter before either has written it.
+		AIWR_Log::record(
+			array(
+				'input_tokens'  => 100,
+				'output_tokens' => 40,
+				'status'        => 'success',
+			)
+		);
+		AIWR_Log::record(
+			array(
+				'input_tokens'  => 30,
+				'output_tokens' => 10,
+				'status'        => 'success',
+			)
+		);
+
+		AIWR_Limits::refresh_usage();
+		AIWR_Limits::refresh_usage();
+
+		$usage = AIWR_Limits::get_current_usage();
+		$this->assertSame( 130, $usage['input_tokens'] );
+		$this->assertSame( 50, $usage['output_tokens'] );
 	}
 
 	public function test_month_rollover_recomputes_from_the_log() {
