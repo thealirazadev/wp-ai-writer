@@ -19,6 +19,7 @@
   },
   "overrides": {
     "adm-zip": "0.6.0",
-    "serialize-javascript": "7.0.5"
+    "serialize-javascript": "7.0.5",
+    "webpack-dev-server": "5.2.6"
   }
 }
