@@ -22,7 +22,7 @@ class AIWR_Settings {
 	/**
 	 * Default settings values.
 	 *
-	 * @return array{api_key:string,model:string,monthly_budget_tokens:int,price_input_per_mtok:float,price_output_per_mtok:float}
+	 * @return array{api_key:string,model:string,monthly_budget_tokens:int,price_input_per_mtok:float,price_output_per_mtok:float,log_retention_days:int}
 	 */
 	public static function defaults() {
 		return array(
@@ -31,6 +31,7 @@ class AIWR_Settings {
 			'monthly_budget_tokens' => 500000,
 			'price_input_per_mtok'  => 0.0,
 			'price_output_per_mtok' => 0.0,
+			'log_retention_days'    => 90,
 		);
 	}
 
@@ -111,6 +112,17 @@ class AIWR_Settings {
 		add_settings_field( 'aiwr_budget_field', __( 'Monthly token budget', 'wp-ai-writer' ), array( $this, 'field_budget' ), self::PAGE, 'aiwr_budget' );
 		add_settings_field( 'aiwr_price_input', __( 'Input price (per million tokens)', 'wp-ai-writer' ), array( $this, 'field_price_input' ), self::PAGE, 'aiwr_budget' );
 		add_settings_field( 'aiwr_price_output', __( 'Output price (per million tokens)', 'wp-ai-writer' ), array( $this, 'field_price_output' ), self::PAGE, 'aiwr_budget' );
+
+		add_settings_section(
+			'aiwr_log',
+			__( 'Activity log', 'wp-ai-writer' ),
+			static function () {
+				echo '<p>' . esc_html__( 'Control how long request history is kept.', 'wp-ai-writer' ) . '</p>';
+			},
+			self::PAGE
+		);
+
+		add_settings_field( 'aiwr_log_retention', __( 'Log retention (days)', 'wp-ai-writer' ), array( $this, 'field_log_retention' ), self::PAGE, 'aiwr_log' );
 	}
 
 	/**
@@ -155,6 +167,21 @@ class AIWR_Settings {
 			value="<?php echo esc_attr( (string) $settings['monthly_budget_tokens'] ); ?>" />
 		<p class="description">
 			<?php esc_html_e( 'Combined input and output tokens allowed per calendar month. Set to 0 for no cap.', 'wp-ai-writer' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the log retention field.
+	 */
+	public function field_log_retention() {
+		$settings = aiwr_get_settings();
+		?>
+		<input type="number" min="0" step="1" class="regular-text"
+			name="<?php echo esc_attr( self::OPTION ); ?>[log_retention_days]"
+			value="<?php echo esc_attr( (string) $settings['log_retention_days'] ); ?>" />
+		<p class="description">
+			<?php esc_html_e( 'Delete activity-log rows older than this many days. A daily task prunes them. Set to 0 to keep them forever.', 'wp-ai-writer' ); ?>
 		</p>
 		<?php
 	}
@@ -221,6 +248,13 @@ class AIWR_Settings {
 			$errors[] = __( 'monthly token budget', 'wp-ai-writer' );
 		} else {
 			$out['monthly_budget_tokens'] = (int) $budget;
+		}
+
+		$retention = isset( $raw['log_retention_days'] ) ? wp_unslash( $raw['log_retention_days'] ) : '';
+		if ( ! is_numeric( $retention ) || (int) $retention < 0 ) {
+			$errors[] = __( 'log retention', 'wp-ai-writer' );
+		} else {
+			$out['log_retention_days'] = (int) $retention;
 		}
 
 		foreach ( array( 'price_input_per_mtok', 'price_output_per_mtok' ) as $price_key ) {
