@@ -15,6 +15,11 @@ defined( 'ABSPATH' ) || exit;
 class AIWR_Log {
 
 	/**
+	 * WP-Cron hook that prunes the log to the retention window.
+	 */
+	const CRON_HOOK = 'aiwr_prune_log';
+
+	/**
 	 * Fully qualified log table name.
 	 *
 	 * @return string
@@ -119,6 +124,49 @@ class AIWR_Log {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+	}
+
+	/**
+	 * Delete log rows created strictly before the retention cutoff.
+	 *
+	 * The boundary is exclusive (created_at < cutoff), so a row landing exactly on the cutoff is
+	 * kept. A retention of zero or less keeps every row.
+	 *
+	 * @param int $days Retention window in days.
+	 * @return int Number of rows deleted.
+	 */
+	public static function prune_older_than( $days ) {
+		global $wpdb;
+
+		$days = (int) $days;
+
+		if ( $days <= 0 ) {
+			return 0;
+		}
+
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
+		$table  = self::table();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table, scheduled maintenance delete, table name is not user input.
+		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE created_at < %s", $cutoff ) );
+
+		return is_int( $deleted ) ? $deleted : 0;
+	}
+
+	/**
+	 * Cron callback: prune the log to the configured retention window, then refresh the usage counter.
+	 *
+	 * The retention setting is read on each run so a changed value takes effect on the next daily
+	 * pass. Usage is recomputed only when rows were actually removed, since the counter is derived
+	 * from the log and an aggressive retention could drop current-month rows.
+	 */
+	public static function run_scheduled_prune() {
+		$settings = aiwr_get_settings();
+		$deleted  = self::prune_older_than( $settings['log_retention_days'] );
+
+		if ( $deleted > 0 ) {
+			AIWR_Limits::refresh_usage();
+		}
 	}
 
 	/**

@@ -18,6 +18,8 @@ delete_option( 'aiwr_settings' );
 delete_option( 'aiwr_usage' );
 delete_option( 'aiwr_db_version' );
 
+wp_clear_scheduled_hook( 'aiwr_prune_log' );
+
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 $wpdb->query(
 	$wpdb->prepare(

@@ -18,12 +18,46 @@ class AIWR_Plugin {
 	public function run() {
 		add_action( 'plugins_loaded', array( 'AIWR_Migrations', 'maybe_upgrade' ) );
 		add_action( 'init', array( $this, 'load_textdomain' ) );
+		add_action( 'init', array( $this, 'ensure_scheduled_events' ) );
+		add_action( AIWR_Log::CRON_HOOK, array( 'AIWR_Log', 'run_scheduled_prune' ) );
 
 		( new AIWR_Settings() )->register();
 		( new AIWR_Log_Screen() )->register();
 
 		add_action( 'rest_api_init', array( new AIWR_Rest(), 'register_routes' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ) );
+	}
+
+	/**
+	 * Activation: run migrations and schedule the daily log prune.
+	 */
+	public static function activate() {
+		AIWR_Migrations::maybe_upgrade();
+		self::schedule_prune();
+	}
+
+	/**
+	 * Deactivation: unschedule the daily log prune.
+	 */
+	public static function deactivate() {
+		wp_clear_scheduled_hook( AIWR_Log::CRON_HOOK );
+	}
+
+	/**
+	 * Ensure the daily prune event exists on load, in case the plugin was updated without a
+	 * reactivation that would otherwise schedule it.
+	 */
+	public function ensure_scheduled_events() {
+		self::schedule_prune();
+	}
+
+	/**
+	 * Schedule the daily prune event when it is not already scheduled.
+	 */
+	private static function schedule_prune() {
+		if ( ! wp_next_scheduled( AIWR_Log::CRON_HOOK ) ) {
+			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', AIWR_Log::CRON_HOOK );
+		}
 	}
 
 	/**

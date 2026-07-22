@@ -101,6 +101,65 @@ class AIWR_Test_Log extends WP_UnitTestCase {
 		$this->assertSame( 2, AIWR_Log::total_count() );
 	}
 
+	public function test_prune_older_than_deletes_strictly_older_rows() {
+		$old      = $this->insert_row();
+		$boundary = $this->insert_row();
+		$recent   = $this->insert_row();
+
+		// The cutoff for a 30-day window sits 30 days back. A one-hour margin keeps the boundary
+		// assertion clear of sub-second drift while the prune recomputes the cutoff.
+		$this->backdate( $old, 30 * DAY_IN_SECONDS + HOUR_IN_SECONDS );
+		$this->backdate( $boundary, 30 * DAY_IN_SECONDS - HOUR_IN_SECONDS );
+
+		$deleted = AIWR_Log::prune_older_than( 30 );
+
+		$this->assertSame( 1, $deleted );
+		$this->assertFalse( $this->row_exists( $old ) );
+		$this->assertTrue( $this->row_exists( $boundary ) );
+		$this->assertTrue( $this->row_exists( $recent ) );
+	}
+
+	public function test_prune_older_than_zero_keeps_all_rows() {
+		$id = $this->insert_row();
+		$this->backdate( $id, 3650 * DAY_IN_SECONDS );
+
+		$this->assertSame( 0, AIWR_Log::prune_older_than( 0 ) );
+		$this->assertTrue( $this->row_exists( $id ) );
+	}
+
+	public function test_scheduled_prune_uses_the_retention_setting() {
+		update_option(
+			AIWR_Settings::OPTION,
+			array_merge( AIWR_Settings::defaults(), array( 'log_retention_days' => 15 ) )
+		);
+
+		$old   = $this->insert_row();
+		$fresh = $this->insert_row();
+		$this->backdate( $old, 20 * DAY_IN_SECONDS );
+
+		AIWR_Log::run_scheduled_prune();
+
+		$this->assertFalse( $this->row_exists( $old ) );
+		$this->assertTrue( $this->row_exists( $fresh ) );
+	}
+
+	private function backdate( $id, $seconds_ago ) {
+		global $wpdb;
+		$table = AIWR_Log::table();
+		$when  = gmdate( 'Y-m-d H:i:s', time() - (int) $seconds_ago );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET created_at = %s WHERE id = %d", $when, $id ) );
+	}
+
+	private function row_exists( $id ) {
+		global $wpdb;
+		$table = AIWR_Log::table();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE id = %d", $id ) ) > 0;
+	}
+
 	public function test_migration_created_table_and_version() {
 		global $wpdb;
 		$table = AIWR_Log::table();
