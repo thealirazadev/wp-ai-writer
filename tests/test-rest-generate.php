@@ -473,6 +473,73 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertLessThanOrEqual( 150, mb_strlen( $data['result']['alt_text'] ) );
 	}
 
+	public function test_apply_alt_text_writes_attachment_meta() {
+		wp_set_current_user( $this->editor_id() );
+		$attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+		$response = $this->dispatch_draft(
+			get_current_user_id(),
+			array(
+				'action' => 'apply_alt_text',
+				'input'  => array(
+					'attachment_id' => $attachment_id,
+					'alt_text'      => 'A field of canola in bloom.',
+				),
+			)
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['result']['saved'] );
+		$this->assertSame(
+			'A field of canola in bloom.',
+			get_post_meta( $attachment_id, '_wp_attachment_image_alt', true )
+		);
+		$this->assertFalse( $this->provider_called );
+	}
+
+	public function test_apply_alt_text_requires_alt_text() {
+		wp_set_current_user( $this->editor_id() );
+		$attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+		$response = $this->dispatch_draft(
+			get_current_user_id(),
+			array(
+				'action' => 'apply_alt_text',
+				'input'  => array(
+					'attachment_id' => $attachment_id,
+					'alt_text'      => '',
+				),
+			)
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'aiwr_invalid_input', $response->get_data()['code'] );
+		$this->assertSame( '', get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
+	}
+
+	public function test_apply_alt_text_rejects_a_user_who_cannot_edit_the_attachment() {
+		$owner = $this->editor_id();
+		wp_set_current_user( $owner );
+		$attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+
+		$response = $this->dispatch_draft(
+			$contributor,
+			array(
+				'action' => 'apply_alt_text',
+				'input'  => array(
+					'attachment_id' => $attachment_id,
+					'alt_text'      => 'must never be saved',
+				),
+			)
+		);
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'rest_forbidden', $response->get_data()['code'] );
+		$this->assertSame( '', get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
+	}
+
 	/**
 	 * Count log rows with a given status.
 	 *

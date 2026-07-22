@@ -51,9 +51,25 @@ function AltTextRow( { image } ) {
 		}
 	}
 
-	function onApply() {
+	async function onApply() {
 		updateBlockAttributes( image.clientId, { alt } );
-		speak( __( 'Alt text applied.', 'wp-ai-writer' ) );
+
+		try {
+			await generate( {
+				action: 'apply_alt_text',
+				stream: false,
+				input: { attachment_id: image.id, alt_text: alt },
+			} );
+			speak( __( 'Alt text applied.', 'wp-ai-writer' ) );
+		} catch ( err ) {
+			setError(
+				err.message ||
+					__(
+						'The alt text was added to the block but could not be saved to the media library.',
+						'wp-ai-writer'
+					)
+			);
+		}
 	}
 
 	return (

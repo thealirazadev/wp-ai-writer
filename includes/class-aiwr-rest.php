@@ -69,7 +69,15 @@ class AIWR_Rest {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function generate( WP_REST_Request $request ) {
-		$started  = microtime( true );
+		$started = microtime( true );
+		$action  = sanitize_key( (string) $request->get_param( 'action' ) );
+
+		// Confirmed applies persist an already-previewed result. They make no provider call, so they
+		// run ahead of the configuration and guardrail checks that only gate generation.
+		if ( 'apply_alt_text' === $action ) {
+			return $this->apply_alt_text( $request );
+		}
+
 		$settings = aiwr_get_settings();
 
 		if ( '' === $settings['api_key'] || '' === $settings['model'] ) {
@@ -80,8 +88,7 @@ class AIWR_Rest {
 			);
 		}
 
-		$action = sanitize_key( (string) $request->get_param( 'action' ) );
-		$valid  = $this->validate( $action, $request );
+		$valid = $this->validate( $action, $request );
 
 		if ( is_wp_error( $valid ) ) {
 			return $valid;
@@ -484,6 +491,52 @@ class AIWR_Rest {
 		return array(
 			'input'   => array( 'attachment_id' => $attachment_id ),
 			'options' => array(),
+		);
+	}
+
+	/**
+	 * Persist confirmed alt text to the attachment's image-alt meta.
+	 *
+	 * Runs the same object-level capability check as generation: the attachment ID comes from the
+	 * request body, so edit_posts alone is not enough. No provider call, budget, or log row is
+	 * involved — this only stores the text the editor already previewed and chose to apply.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function apply_alt_text( WP_REST_Request $request ) {
+		$input         = $request->get_param( 'input' );
+		$input         = is_array( $input ) ? $input : array();
+		$attachment_id = isset( $input['attachment_id'] ) ? (int) $input['attachment_id'] : 0;
+		$alt           = isset( $input['alt_text'] ) ? sanitize_text_field( (string) $input['alt_text'] ) : '';
+
+		if ( $attachment_id < 1 ) {
+			return $this->invalid( __( 'Select an image to update.', 'wp-ai-writer' ) );
+		}
+
+		if ( '' === $alt ) {
+			return $this->invalid( __( 'Generate alt text before applying it.', 'wp-ai-writer' ) );
+		}
+
+		if ( 'attachment' !== get_post_type( $attachment_id ) ) {
+			return $this->image_error();
+		}
+
+		if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You are not allowed to use that image.', 'wp-ai-writer' ),
+				array( 'status' => rest_authorization_required_code() )
+			);
+		}
+
+		update_post_meta( $attachment_id, '_wp_attachment_image_alt', $this->truncate( $alt, 150 ) );
+
+		return rest_ensure_response(
+			array(
+				'action' => 'apply_alt_text',
+				'result' => array( 'saved' => true ),
+			)
 		);
 	}
 
