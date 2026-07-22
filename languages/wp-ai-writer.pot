@@ -9,15 +9,15 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-21T22:39:41+00:00\n"
+"POT-Creation-Date: 2026-07-22T23:08:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-ai-writer\n"
 
 #. Plugin Name of the plugin
 #: wp-ai-writer.php
-#: includes/class-aiwr-settings.php:68
 #: includes/class-aiwr-settings.php:69
+#: includes/class-aiwr-settings.php:70
 #: src/index.js:17
 #: src/index.js:21
 msgid "AI Writer"
@@ -114,7 +114,7 @@ msgid "Aborted"
 msgstr ""
 
 #: includes/class-aiwr-prompts.php:42
-#: includes/class-aiwr-rest.php:350
+#: includes/class-aiwr-rest.php:361
 msgid "That action is not available."
 msgstr ""
 
@@ -135,147 +135,184 @@ msgstr ""
 msgid "You are not allowed to edit this post."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:78
+#: includes/class-aiwr-rest.php:90
 msgid "The writing assistant is not configured yet. Ask an administrator to add the provider key and model."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:364
+#: includes/class-aiwr-rest.php:375
 msgid "Enter a prompt to generate a draft."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:368
+#: includes/class-aiwr-rest.php:379
 msgid "The prompt must be 2000 characters or fewer."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:389
+#: includes/class-aiwr-rest.php:400
 msgid "Select a block with text to rewrite."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:393
+#: includes/class-aiwr-rest.php:404
 msgid "The selected text must be 8000 characters or fewer."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:401
+#: includes/class-aiwr-rest.php:412
 msgid "Choose a valid tone."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:405
+#: includes/class-aiwr-rest.php:416
 msgid "Choose a valid length."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:432
+#: includes/class-aiwr-rest.php:443
 msgid "Add some content to the post before generating SEO text."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:458
+#: includes/class-aiwr-rest.php:469
 msgid "Add some content to the post before generating an excerpt."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:481
+#: includes/class-aiwr-rest.php:492
 msgid "Select an image to describe."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:510
+#: includes/class-aiwr-rest.php:518
+msgid "Select an image to update."
+msgstr ""
+
+#: includes/class-aiwr-rest.php:522
+msgid "Generate alt text before applying it."
+msgstr ""
+
+#: includes/class-aiwr-rest.php:532
+#: includes/class-aiwr-rest.php:633
 msgid "You are not allowed to use that image."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:556
+#: includes/class-aiwr-rest.php:566
+msgid "Save the post before applying SEO text."
+msgstr ""
+
+#: includes/class-aiwr-rest.php:570
+msgid "Generate a meta description before applying it."
+msgstr ""
+
+#: includes/class-aiwr-rest.php:679
 msgid "That image could not be read. It may be missing, too large, or an unsupported type."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:92
+#: includes/class-aiwr-settings.php:93
 msgid "Provider"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:94
+#: includes/class-aiwr-settings.php:95
 msgid "Connection to the LLM provider API. The key is stored on the server and never sent to the browser."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:99
+#: includes/class-aiwr-settings.php:100
 msgid "API key"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:100
+#: includes/class-aiwr-settings.php:101
 msgid "Model identifier"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:104
+#: includes/class-aiwr-settings.php:105
 msgid "Budget and pricing"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:106
+#: includes/class-aiwr-settings.php:107
 msgid "Cap monthly usage and optionally estimate spend. Leave prices blank to skip cost estimates."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:111
+#: includes/class-aiwr-settings.php:112
 msgid "Monthly token budget"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:112
+#: includes/class-aiwr-settings.php:113
 msgid "Input price (per million tokens)"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:113
+#: includes/class-aiwr-settings.php:114
 msgid "Output price (per million tokens)"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:127
+#: includes/class-aiwr-settings.php:118
+msgid "Activity log"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:120
+msgid "Control how long request history is kept."
+msgstr ""
+
+#: includes/class-aiwr-settings.php:125
+msgid "Log retention (days)"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:139
 msgid "Leave the masked value to keep the stored key. Clear the field to delete it. Enter a new key to replace it."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:142
+#: includes/class-aiwr-settings.php:154
 msgid "The model identifier string as documented by your provider."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:157
+#: includes/class-aiwr-settings.php:169
 msgid "Combined input and output tokens allowed per calendar month. Set to 0 for no cap."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:221
+#: includes/class-aiwr-settings.php:184
+msgid "Delete activity-log rows older than this many days. A daily task prunes them. Set to 0 to keep them forever."
+msgstr ""
+
+#: includes/class-aiwr-settings.php:248
 msgid "monthly token budget"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:231
+#: includes/class-aiwr-settings.php:255
+msgid "log retention"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:265
 msgid "token price"
 msgstr ""
 
 #. translators: %s: comma-separated list of rejected field names.
-#: includes/class-aiwr-settings.php:243
+#: includes/class-aiwr-settings.php:277
 #, php-format
 msgid "These values were invalid and were not saved: %s. Previous values were kept."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:285
+#: includes/class-aiwr-settings.php:319
 msgid "Usage this month"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:287
+#: includes/class-aiwr-settings.php:321
 msgid "No usage recorded this month."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:292
+#: includes/class-aiwr-settings.php:326
 msgid "Input tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:296
+#: includes/class-aiwr-settings.php:330
 msgid "Output tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:300
+#: includes/class-aiwr-settings.php:334
 msgid "Total tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:304
+#: includes/class-aiwr-settings.php:338
 msgid "Monthly budget"
 msgstr ""
 
 #. translators: 1: budget token count, 2: percent of budget used.
-#: includes/class-aiwr-settings.php:311
+#: includes/class-aiwr-settings.php:345
 #, php-format
 msgid "%1$s tokens (%2$d%% used)"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:316
+#: includes/class-aiwr-settings.php:350
 msgid "No cap"
 msgstr ""
 
@@ -307,35 +344,39 @@ msgstr ""
 msgid "Alt text generation failed."
 msgstr ""
 
-#: src/actions/alt-text.js:56
+#: src/actions/alt-text.js:63
 msgid "Alt text applied."
 msgstr ""
 
-#: src/actions/alt-text.js:94
+#: src/actions/alt-text.js:67
+msgid "The alt text was added to the block but could not be saved to the media library."
+msgstr ""
+
+#: src/actions/alt-text.js:110
 #: src/actions/draft.js:123
 #: src/actions/excerpt.js:103
 #: src/actions/rewrite.js:141
-#: src/actions/seo.js:106
+#: src/actions/seo.js:135
 msgid "Generating"
 msgstr ""
 
-#: src/actions/alt-text.js:95
+#: src/actions/alt-text.js:111
 #: src/actions/draft.js:124
 #: src/actions/excerpt.js:104
 #: src/actions/rewrite.js:142
-#: src/actions/seo.js:107
+#: src/actions/seo.js:136
 msgid "Generate"
 msgstr ""
 
-#: src/actions/alt-text.js:100
+#: src/actions/alt-text.js:116
 msgid "Apply"
 msgstr ""
 
-#: src/actions/alt-text.js:123
+#: src/actions/alt-text.js:139
 msgid "All images have alt text."
 msgstr ""
 
-#: src/actions/alt-text.js:139
+#: src/actions/alt-text.js:155
 msgid "Some images use an external URL and are not supported yet."
 msgstr ""
 
@@ -368,7 +409,7 @@ msgstr ""
 #: src/actions/draft.js:136
 #: src/actions/excerpt.js:116
 #: src/actions/rewrite.js:154
-#: src/actions/seo.js:119
+#: src/actions/seo.js:148
 msgid "The writing assistant is not configured yet. Ask an administrator to set it up."
 msgstr ""
 
@@ -476,28 +517,44 @@ msgstr ""
 msgid "Post title updated."
 msgstr ""
 
-#: src/actions/seo.js:91
+#: src/actions/seo.js:98
+msgid "Meta description saved."
+msgstr ""
+
+#: src/actions/seo.js:104
+msgid "The meta description could not be saved."
+msgstr ""
+
+#: src/actions/seo.js:110
+msgid "Saving the meta description failed."
+msgstr ""
+
+#: src/actions/seo.js:120
 msgid "Generate an SEO title and meta description from the current post."
 msgstr ""
 
-#: src/actions/seo.js:131
+#: src/actions/seo.js:160
 msgid "SEO title"
 msgstr ""
 
-#: src/actions/seo.js:139
+#: src/actions/seo.js:168
 msgid "Copy title"
 msgstr ""
 
-#: src/actions/seo.js:142
+#: src/actions/seo.js:171
 msgid "Use as post title"
 msgstr ""
 
-#: src/actions/seo.js:149
+#: src/actions/seo.js:178
 msgid "Meta description"
 msgstr ""
 
-#: src/actions/seo.js:157
+#: src/actions/seo.js:186
 msgid "Copy description"
+msgstr ""
+
+#: src/actions/seo.js:195
+msgid "Save meta description"
 msgstr ""
 
 #: src/components/result-preview.js:51
