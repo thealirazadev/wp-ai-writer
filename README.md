@@ -10,6 +10,14 @@ text for images that are missing it. Every request to the LLM provider API runs 
 the plugin's REST proxy, with streaming responses, per-user rate limits, and a monthly token budget
 enforced on the server; the API key never reaches the browser.
 
+## Screenshots
+
+![AI Writer sidebar open in the block editor, showing the Draft, Rewrite, SEO, and Excerpt tabs with a prompt entered and a Generate button](docs/images/block-editor-sidebar.png)
+
+![Settings screen with a masked API key, model identifier, monthly token budget, per-million-token prices, and a usage-this-month summary](docs/images/settings.png)
+
+![Activity log table listing recent requests with date, user, action, model, token counts, cost estimate, and status](docs/images/activity-log.png)
+
 ## Stack
 
 - PHP 8.1+, WordPress 6.6+
