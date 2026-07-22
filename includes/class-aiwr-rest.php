@@ -78,6 +78,10 @@ class AIWR_Rest {
 			return $this->apply_alt_text( $request );
 		}
 
+		if ( 'apply_seo_meta' === $action ) {
+			return $this->apply_seo_meta( $request );
+		}
+
 		$settings = aiwr_get_settings();
 
 		if ( '' === $settings['api_key'] || '' === $settings['model'] ) {
@@ -536,6 +540,72 @@ class AIWR_Rest {
 			array(
 				'action' => 'apply_alt_text',
 				'result' => array( 'saved' => true ),
+			)
+		);
+	}
+
+	/**
+	 * Persist a confirmed SEO meta description to a post meta key and notify integrators.
+	 *
+	 * The permission callback has already enforced edit_post on post_id, so this only needs to
+	 * validate the payload. The write is optional and safe: a plugin-owned protected meta key is the
+	 * default, the aiwr_seo_meta_key filter can redirect it to an SEO plugin's key (or disable the
+	 * direct write by returning ''), and the aiwr_seo_meta_saved action lets a bridge persist the
+	 * value however it prefers.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function apply_seo_meta( WP_REST_Request $request ) {
+		$post_id = (int) $request->get_param( 'post_id' );
+		$input   = $request->get_param( 'input' );
+		$input   = is_array( $input ) ? $input : array();
+		$desc    = isset( $input['meta_description'] ) ? sanitize_text_field( (string) $input['meta_description'] ) : '';
+
+		if ( $post_id < 1 ) {
+			return $this->invalid( __( 'Save the post before applying SEO text.', 'wp-ai-writer' ) );
+		}
+
+		if ( '' === $desc ) {
+			return $this->invalid( __( 'Generate a meta description before applying it.', 'wp-ai-writer' ) );
+		}
+
+		$desc = $this->truncate( $desc, 160 );
+
+		/**
+		 * Filter the post meta key the generated SEO meta description is written to.
+		 *
+		 * Return an empty string to skip the direct write and rely solely on the aiwr_seo_meta_saved
+		 * action, for example to feed an SEO plugin through its own API.
+		 *
+		 * @param string $meta_key Default plugin-owned meta key.
+		 * @param int    $post_id  Target post ID.
+		 */
+		$meta_key = (string) apply_filters( 'aiwr_seo_meta_key', '_aiwr_meta_description', $post_id );
+
+		if ( '' !== $meta_key ) {
+			update_post_meta( $post_id, $meta_key, $desc );
+		}
+
+		/**
+		 * Fires after a generated SEO meta description is applied to a post.
+		 *
+		 * Lets an integration (Yoast, Rank Math, a custom bridge) store the description in whatever
+		 * shape it expects, independent of the direct meta write above.
+		 *
+		 * @param int    $post_id  Target post ID.
+		 * @param string $desc     Truncated meta description.
+		 * @param string $meta_key Meta key written to, or '' when the direct write was skipped.
+		 */
+		do_action( 'aiwr_seo_meta_saved', $post_id, $desc, $meta_key );
+
+		return rest_ensure_response(
+			array(
+				'action' => 'apply_seo_meta',
+				'result' => array(
+					'saved'    => '' !== $meta_key,
+					'meta_key' => $meta_key,
+				),
 			)
 		);
 	}

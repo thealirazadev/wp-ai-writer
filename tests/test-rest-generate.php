@@ -540,6 +540,120 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertSame( '', get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
 	}
 
+	public function test_apply_seo_meta_writes_post_meta() {
+		$editor = $this->editor_id();
+		wp_set_current_user( $editor );
+		$post_id = self::factory()->post->create( array( 'post_author' => $editor ) );
+
+		$response = $this->dispatch_draft(
+			$editor,
+			array(
+				'action'  => 'apply_seo_meta',
+				'post_id' => $post_id,
+				'input'   => array( 'meta_description' => 'A concise, compelling summary of the post.' ),
+			)
+		);
+
+		$data = $response->get_data();
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $data['result']['saved'] );
+		$this->assertSame( '_aiwr_meta_description', $data['result']['meta_key'] );
+		$this->assertSame(
+			'A concise, compelling summary of the post.',
+			get_post_meta( $post_id, '_aiwr_meta_description', true )
+		);
+		$this->assertFalse( $this->provider_called );
+	}
+
+	public function test_apply_seo_meta_honors_the_meta_key_filter_and_action() {
+		$editor = $this->editor_id();
+		wp_set_current_user( $editor );
+		$post_id = self::factory()->post->create( array( 'post_author' => $editor ) );
+
+		$filter = static function () {
+			return '_yoast_wpseo_metadesc';
+		};
+		add_filter( 'aiwr_seo_meta_key', $filter );
+
+		$captured = array();
+		$hook     = static function ( $id, $desc, $key ) use ( &$captured ) {
+			$captured = array( $id, $desc, $key );
+		};
+		add_action( 'aiwr_seo_meta_saved', $hook, 10, 3 );
+
+		$response = $this->dispatch_draft(
+			$editor,
+			array(
+				'action'  => 'apply_seo_meta',
+				'post_id' => $post_id,
+				'input'   => array( 'meta_description' => 'Filtered target key.' ),
+			)
+		);
+
+		remove_filter( 'aiwr_seo_meta_key', $filter );
+		remove_action( 'aiwr_seo_meta_saved', $hook, 10 );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'Filtered target key.', get_post_meta( $post_id, '_yoast_wpseo_metadesc', true ) );
+		$this->assertSame( '', get_post_meta( $post_id, '_aiwr_meta_description', true ) );
+		$this->assertSame( array( $post_id, 'Filtered target key.', '_yoast_wpseo_metadesc' ), $captured );
+	}
+
+	public function test_apply_seo_meta_skips_direct_write_when_key_filtered_empty() {
+		$editor = $this->editor_id();
+		wp_set_current_user( $editor );
+		$post_id = self::factory()->post->create( array( 'post_author' => $editor ) );
+
+		$filter = static function () {
+			return '';
+		};
+		add_filter( 'aiwr_seo_meta_key', $filter );
+
+		$fired = false;
+		$hook  = static function () use ( &$fired ) {
+			$fired = true;
+		};
+		add_action( 'aiwr_seo_meta_saved', $hook );
+
+		$response = $this->dispatch_draft(
+			$editor,
+			array(
+				'action'  => 'apply_seo_meta',
+				'post_id' => $post_id,
+				'input'   => array( 'meta_description' => 'No direct write.' ),
+			)
+		);
+
+		remove_filter( 'aiwr_seo_meta_key', $filter );
+		remove_action( 'aiwr_seo_meta_saved', $hook );
+
+		$data = $response->get_data();
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertFalse( $data['result']['saved'] );
+		$this->assertSame( '', get_post_meta( $post_id, '_aiwr_meta_description', true ) );
+		$this->assertTrue( $fired );
+	}
+
+	public function test_apply_seo_meta_forbidden_for_a_post_the_user_cannot_edit() {
+		$owner = $this->editor_id();
+		wp_set_current_user( $owner );
+		$post_id = self::factory()->post->create( array( 'post_author' => $owner ) );
+
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+
+		$response = $this->dispatch_draft(
+			$contributor,
+			array(
+				'action'  => 'apply_seo_meta',
+				'post_id' => $post_id,
+				'input'   => array( 'meta_description' => 'must not be saved' ),
+			)
+		);
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( '', get_post_meta( $post_id, '_aiwr_meta_description', true ) );
+	}
+
 	/**
 	 * Count log rows with a given status.
 	 *

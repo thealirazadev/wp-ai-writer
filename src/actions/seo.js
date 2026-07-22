@@ -83,6 +83,35 @@ export default function SeoPanel() {
 		}
 	}
 
+	async function saveMetaDescription() {
+		if ( ! result || ! result.meta_description ) {
+			return;
+		}
+
+		try {
+			await generate( {
+				action: 'apply_seo_meta',
+				stream: false,
+				postId,
+				input: { meta_description: result.meta_description },
+			} );
+			speak( __( 'Meta description saved.', 'wp-ai-writer' ) );
+		} catch ( err ) {
+			setError( {
+				code: err.code,
+				message:
+					err.message ||
+					__(
+						'The meta description could not be saved.',
+						'wp-ai-writer'
+					),
+			} );
+			speak(
+				__( 'Saving the meta description failed.', 'wp-ai-writer' )
+			);
+		}
+	}
+
 	const isNotice = error && 'aiwr_not_configured' === error.code;
 
 	return (
@@ -159,6 +188,15 @@ export default function SeoPanel() {
 									'wp-ai-writer'
 								) }
 							/>
+							<Button
+								variant="primary"
+								onClick={ saveMetaDescription }
+							>
+								{ __(
+									'Save meta description',
+									'wp-ai-writer'
+								) }
+							</Button>
 						</div>
 					</div>
 				</div>

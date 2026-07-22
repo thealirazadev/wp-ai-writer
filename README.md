@@ -40,11 +40,30 @@ define( 'AIWR_PROVIDER_ENDPOINT', 'https://your-provider.example/v1/generate' );
 
 The remaining configuration is entered on **Settings → AI Writer**: the provider API key (stored
 server-side, shown masked, never sent to the browser), the model identifier, the monthly token
-budget, and optional per-million-token prices for cost estimates. Usage for the current month and
-the full activity log (**Tools → AI Writer Log**) are visible to administrators.
+budget, optional per-million-token prices for cost estimates, and the activity-log retention window
+in days (a daily WP-Cron task prunes older rows; set it to 0 to keep the log forever). Usage for the
+current month and the full activity log (**Tools → AI Writer Log**) are visible to administrators.
 
 Copy `.env.example` to `.env` for local development values (dev key, mock endpoint, model string).
 Nothing in `.env` is read in production.
+
+## Hooks
+
+The SEO action can persist the generated meta description to post meta when the editor clicks
+**Save meta description**. Two hooks make this safe to integrate with an SEO plugin:
+
+```php
+// Redirect the write to an SEO plugin's meta key (default: _aiwr_meta_description).
+// Return '' to skip the direct write and rely solely on the action below.
+add_filter( 'aiwr_seo_meta_key', function ( $key, $post_id ) {
+	return '_yoast_wpseo_metadesc'; // or 'rank_math_description'
+}, 10, 2 );
+
+// Persist the description however the target plugin expects.
+add_action( 'aiwr_seo_meta_saved', function ( $post_id, $description, $meta_key ) {
+	// ...custom handling...
+}, 10, 3 );
+```
 
 ## Install
 
