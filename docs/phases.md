@@ -211,6 +211,55 @@ Goal: the admin-facing log, translation readiness, uninstall cleanup, and a fina
 
 ---
 
+## Phase 6: Deferred enhancements — retention, attachment alt meta, and SEO meta integration
+
+Goal: ship three items promoted from the backlog. Administrators can bound how long activity-log
+rows live (with an automatic daily prune); applying generated alt text also writes the attachment's
+`_wp_attachment_image_alt` meta; and an applied SEO meta description is persisted to a post meta key
+that SEO plugins can consume through a documented filter and action. Each write reuses the
+capability checks already enforced and stays inside the "preview then confirm" rule — nothing is
+written until the editor clicks Apply.
+
+### Definition of done
+
+- Settings gains a "Log retention (days)" field (0 = keep forever) that saves and validates like the
+  other numeric fields; an invalid value is rejected with the admin notice and the old value kept.
+- A daily `aiwr_prune_log` WP-Cron event deletes log rows older than the retention window and then
+  refreshes the usage counter; it is scheduled on activation, ensured on load, cleared on
+  deactivation, and cleared on uninstall. `AIWR_Log::prune_older_than()` deletes strictly older than
+  the cutoff (`created_at < cutoff`), so a row exactly on the boundary is kept.
+- Applying alt text sends a confirmed `apply_alt_text` request that writes
+  `_wp_attachment_image_alt`, guarded by the same `edit_post` check as generation; it makes no
+  provider call and consumes no budget. The block attribute is still set client-side.
+- Applying the SEO meta description sends a confirmed `apply_seo_meta` request that writes the
+  description to the meta key returned by the `aiwr_seo_meta_key` filter (default
+  `_aiwr_meta_description`) and fires `aiwr_seo_meta_saved` for integrators (Yoast/Rank Math bridges);
+  when the filter returns an empty key the direct write is skipped safely and only the action fires.
+
+### Manual test checklist
+
+- Save a retention of 30: the value persists; `wp cron event list` shows `aiwr_prune_log`. Age a log
+  row past 30 days, run the event: the old row is gone, recent rows remain. Set retention to 0: no
+  pruning occurs. Save a negative retention: error notice, old value kept.
+- Generate + Apply alt text on an image: the block alt is set and the attachment's alt meta is
+  updated (visible in the Media library). A contributor applying to media they cannot edit gets a
+  403 and no meta change.
+- Generate SEO, Apply meta description: `get_post_meta( $id, '_aiwr_meta_description', true )`
+  returns the text; filtering `aiwr_seo_meta_key` to a Yoast/Rank Math key redirects the write;
+  hooking `aiwr_seo_meta_saved` receives the post ID and description; returning `''` from the filter
+  skips the direct write with no error.
+- Deactivate the plugin: `aiwr_prune_log` is unscheduled. Uninstall: option, table, and cron gone.
+
+### Commits
+
+- `feat: add log retention setting to the settings page`
+- `feat: prune activity log rows past the retention window on a daily cron`
+- `feat: write generated alt text back to attachment meta on apply`
+- `feat: persist the seo meta description to a post meta key on apply`
+- `chore: regenerate the translation template for phase 6 strings`
+
+---
+
 ## Phase verification (run at the end of every phase)
 
 - Run the app: `npm run build`, start `wp-env`, activate the plugin; exercise the phase's features
@@ -234,6 +283,10 @@ Goal: the admin-facing log, translation readiness, uninstall cleanup, and a fina
 
 ## Backlog
 
-(Empty. Out-of-scope or deferred items land here — candidates already noted in the PRD: SEO plugin
-meta-key integration, writing alt text back to attachment meta, offloaded-media support, log
-pruning/retention setting.)
+Out-of-scope or deferred items land here. Phase 6 promoted and shipped three of the original
+candidates (SEO plugin meta-key integration, writing alt text back to attachment meta, and the log
+pruning/retention setting). Remaining deferred candidate:
+
+- Offloaded-media support: describing attachments whose files live off-server (e.g. an object-store
+  offload plugin), where `get_attached_file()` returns a remote or absent path. The alt-text action
+  currently requires a readable local file.
