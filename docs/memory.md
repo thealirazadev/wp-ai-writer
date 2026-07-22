@@ -83,6 +83,22 @@ every non-obvious decision with its reason.
   `@opentelemetry/core` cascade, two further `minimatch` advisories, one further `linkify-it`
   advisory) were fixed too. Result: `npm audit` 0 and `composer audit` 0.
 
+- Phase 6 complete (three promoted backlog items). (1) Log retention: a "Log retention (days)"
+  setting (default 90, 0 = keep forever) with the same validate-and-keep-old behaviour as the other
+  numeric fields; `AIWR_Log::prune_older_than()` deletes rows with `created_at < cutoff` (exclusive
+  boundary) and `run_scheduled_prune()` reads the setting and refreshes usage only when rows were
+  removed; a daily `aiwr_prune_log` WP-Cron event is scheduled on activation, ensured on `init`,
+  cleared on deactivation, and cleared in uninstall.php. (2) Alt text -> attachment meta: a confirmed
+  `apply_alt_text` route action writes `_wp_attachment_image_alt`, reusing the strict
+  `edit_post( attachment_id )` check; the client Apply now also persists the meta after setting the
+  block attribute. (3) SEO meta integration: a confirmed `apply_seo_meta` route action writes the
+  description to the key from the `aiwr_seo_meta_key` filter (default `_aiwr_meta_description`) and
+  fires `aiwr_seo_meta_saved` for Yoast/Rank Math bridges; an empty filtered key skips the direct
+  write safely. Both apply actions early-return in `generate()` before the not-configured/guardrail
+  checks (they make no provider call, consume no budget, and write no log row). Tests: +3 log,
+  +3 alt, +4 seo. PHPUnit 48 -> 58 (180 assertions), Jest 23/23, phpcs + build clean. Translation
+  template regenerated (121 -> 135 strings). README gained a Hooks section and a retention note.
+
 ## In progress
 
 - Implementation complete. Remaining work is human-only: manual editor QA per docs/phases.md and
@@ -196,6 +212,24 @@ every non-obvious decision with its reason.
   that lint passed; the bump could have silently broken every integration test. Polyfills 4.0 still
   declares `phpunit/phpunit ^9.0` and the WP bootstrap only enforces a floor of 1.1.0, and the suite
   stayed at 48 tests / 147 assertions.
+- Confirmed applies (`apply_alt_text`, `apply_seo_meta`) are handled by the one generate route but
+  short-circuit before the not-configured, rate-limit, and budget checks. They persist a result the
+  editor already previewed, make no provider call, and write no activity-log row, so gating them on
+  provider configuration or the token budget would be wrong. This keeps the plugin's single REST
+  route while preserving the "preview then confirm" rule: generation only previews; the meta writes
+  happen on an explicit Apply. `apply_alt_text` re-runs the strict `edit_post( attachment_id )`
+  object check (the attachment ID is request input); `apply_seo_meta` relies on the route permission
+  callback, which already enforces `edit_post( post_id )` for the supplied post_id.
+- SEO meta write is a filter+action pair, not a hardcoded Yoast/Rank Math dependency: the default key
+  `_aiwr_meta_description` is plugin-owned and protected (leading underscore). Sites map it to their
+  SEO plugin via `aiwr_seo_meta_key` (return '' to disable the direct write) and/or hook
+  `aiwr_seo_meta_saved`. Avoids a hard coupling to any specific SEO plugin while satisfying the PRD's
+  deferred "SEO plugin meta-key integration" candidate.
+- Log prune boundary is exclusive (`created_at < cutoff`) so the boundary test is not flaky: rows are
+  placed a full hour either side of the 30-day cutoff, well clear of the sub-second drift between
+  computing the cutoff and running the delete. `run_scheduled_prune()` recomputes the usage counter
+  after a prune because an aggressive retention could drop current-month rows the counter is derived
+  from.
 - The `alt_text` capability check uses `edit_post` on the attachment, which is deliberately strict:
   an author cannot generate alt text for library media uploaded by someone else, because
   `edit_post` on an attachment requires `edit_others_posts` for non-owners. Chosen over the looser
