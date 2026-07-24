@@ -116,6 +116,39 @@ class AIWR_Test_Limits extends WP_UnitTestCase {
 		$this->assertTrue( AIWR_Limits::check_budget() );
 	}
 
+	public function test_budget_is_enforced_from_the_recomputed_usage_counter() {
+		// With no cached counter, the budget check must recompute this month's total from the log.
+		delete_option( AIWR_Limits::USAGE_OPTION );
+		update_option( AIWR_Settings::OPTION, array( 'monthly_budget_tokens' => 100 ) );
+
+		AIWR_Log::record(
+			array(
+				'input_tokens'  => 70,
+				'output_tokens' => 30,
+				'status'        => 'success',
+			)
+		);
+
+		$error = AIWR_Limits::check_budget();
+		$this->assertWPError( $error );
+		$this->assertSame( 'aiwr_budget_exhausted', $error->get_error_code() );
+	}
+
+	public function test_budget_allows_when_the_recomputed_total_is_below_the_cap() {
+		delete_option( AIWR_Limits::USAGE_OPTION );
+		update_option( AIWR_Settings::OPTION, array( 'monthly_budget_tokens' => 100 ) );
+
+		AIWR_Log::record(
+			array(
+				'input_tokens'  => 60,
+				'output_tokens' => 39,
+				'status'        => 'success',
+			)
+		);
+
+		$this->assertTrue( AIWR_Limits::check_budget() );
+	}
+
 	public function test_refresh_usage_totals_the_logged_rows() {
 		AIWR_Log::record(
 			array(
