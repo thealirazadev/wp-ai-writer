@@ -99,6 +99,28 @@ every non-obvious decision with its reason.
   +3 alt, +4 seo. PHPUnit 48 -> 58 (180 assertions), Jest 23/23, phpcs + build clean. Translation
   template regenerated (121 -> 135 strings). README gained a Hooks section and a retention note.
 
+- Repo-maturity and accessibility pass (post-phase-6). Tier 1 (repo hygiene, one commit each):
+  `CONTRIBUTING.md` (dev setup, the hand-provisioned `WP_TESTS_DIR` PHPUnit path, lint/test/build
+  commands, PR expectations), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1),
+  `.github/ISSUE_TEMPLATE/` (bug + feature + config, blank issues disabled, security routed to
+  private reporting), `.github/PULL_REQUEST_TEMPLATE.md` (checklist tied to phpcs/phpunit/jest/build),
+  `.editorconfig` (tabs for PHP/JS/SCSS, 2-space for YAML/JSON, no trailing-whitespace trim for md/pot),
+  and `CHANGELOG.md` (Keep a Changelog; 0.1.0 left dateless since nothing is tagged yet). Tier 2
+  (accessibility + coverage): (1) settings-field label associations — every `add_settings_field` now
+  passes `label_for` and each input carries the matching `id` plus `aria-describedby` to its
+  description; new `tests/test-settings.php` asserts the wiring via `$wp_settings_fields`. (2) Sidebar
+  accessible names — the per-image alt-text Generate/Apply buttons get distinct `aria-label`s built
+  from the image file name (pure `imageLabel()` moved into `utils/blocks.js` and Jest-tested), and the
+  streaming preview is exposed as a labelled `role="region"`. (3) New thin-path tests: JS stream abort
+  after the first delta must NOT retry (guards against duplicate content) for both the read-error and
+  no-done-event cases; PHP budget enforcement driven by the recomputed usage counter (no cached
+  counter); PHP usage-counter refresh branch of `run_scheduled_prune` (refreshes when rows were
+  deleted, skips when none were). Translation template regenerated (135 -> 138 strings) for the three
+  new a11y strings. Gate after every commit stayed green: phpcs, ESLint, `php -l`, build, Jest
+  23 -> 28, PHPUnit 58 -> 64 (203 assertions). No new dependencies. Full-render React a11y tests were
+  not feasible — `@wordpress/components` and the testing-library packages are not installed and adding
+  them was out of scope — so a11y JS is verified through extracted pure helpers.
+
 ## In progress
 
 - Implementation complete. Remaining work is human-only: manual editor QA per docs/phases.md and
