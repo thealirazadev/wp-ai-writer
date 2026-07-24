@@ -97,8 +97,8 @@ class AIWR_Settings {
 			self::PAGE
 		);
 
-		add_settings_field( 'aiwr_api_key', __( 'API key', 'wp-ai-writer' ), array( $this, 'field_api_key' ), self::PAGE, 'aiwr_provider' );
-		add_settings_field( 'aiwr_model', __( 'Model identifier', 'wp-ai-writer' ), array( $this, 'field_model' ), self::PAGE, 'aiwr_provider' );
+		add_settings_field( 'aiwr_api_key', __( 'API key', 'wp-ai-writer' ), array( $this, 'field_api_key' ), self::PAGE, 'aiwr_provider', array( 'label_for' => 'aiwr_api_key' ) );
+		add_settings_field( 'aiwr_model', __( 'Model identifier', 'wp-ai-writer' ), array( $this, 'field_model' ), self::PAGE, 'aiwr_provider', array( 'label_for' => 'aiwr_model' ) );
 
 		add_settings_section(
 			'aiwr_budget',
@@ -109,9 +109,9 @@ class AIWR_Settings {
 			self::PAGE
 		);
 
-		add_settings_field( 'aiwr_budget_field', __( 'Monthly token budget', 'wp-ai-writer' ), array( $this, 'field_budget' ), self::PAGE, 'aiwr_budget' );
-		add_settings_field( 'aiwr_price_input', __( 'Input price (per million tokens)', 'wp-ai-writer' ), array( $this, 'field_price_input' ), self::PAGE, 'aiwr_budget' );
-		add_settings_field( 'aiwr_price_output', __( 'Output price (per million tokens)', 'wp-ai-writer' ), array( $this, 'field_price_output' ), self::PAGE, 'aiwr_budget' );
+		add_settings_field( 'aiwr_budget_field', __( 'Monthly token budget', 'wp-ai-writer' ), array( $this, 'field_budget' ), self::PAGE, 'aiwr_budget', array( 'label_for' => 'aiwr_monthly_budget_tokens' ) );
+		add_settings_field( 'aiwr_price_input', __( 'Input price (per million tokens)', 'wp-ai-writer' ), array( $this, 'field_price_input' ), self::PAGE, 'aiwr_budget', array( 'label_for' => 'aiwr_price_input_per_mtok' ) );
+		add_settings_field( 'aiwr_price_output', __( 'Output price (per million tokens)', 'wp-ai-writer' ), array( $this, 'field_price_output' ), self::PAGE, 'aiwr_budget', array( 'label_for' => 'aiwr_price_output_per_mtok' ) );
 
 		add_settings_section(
 			'aiwr_log',
@@ -122,7 +122,7 @@ class AIWR_Settings {
 			self::PAGE
 		);
 
-		add_settings_field( 'aiwr_log_retention', __( 'Log retention (days)', 'wp-ai-writer' ), array( $this, 'field_log_retention' ), self::PAGE, 'aiwr_log' );
+		add_settings_field( 'aiwr_log_retention', __( 'Log retention (days)', 'wp-ai-writer' ), array( $this, 'field_log_retention' ), self::PAGE, 'aiwr_log', array( 'label_for' => 'aiwr_log_retention_days' ) );
 	}
 
 	/**
@@ -132,10 +132,11 @@ class AIWR_Settings {
 		$settings = aiwr_get_settings();
 		$masked   = self::mask_key( $settings['api_key'] );
 		?>
-		<input type="text" class="regular-text" autocomplete="off" spellcheck="false"
+		<input type="text" id="aiwr_api_key" class="regular-text" autocomplete="off" spellcheck="false"
+			aria-describedby="aiwr_api_key_desc"
 			name="<?php echo esc_attr( self::OPTION ); ?>[api_key]"
 			value="<?php echo esc_attr( $masked ); ?>" />
-		<p class="description">
+		<p class="description" id="aiwr_api_key_desc">
 			<?php esc_html_e( 'Leave the masked value to keep the stored key. Clear the field to delete it. Enter a new key to replace it.', 'wp-ai-writer' ); ?>
 		</p>
 		<?php
@@ -147,10 +148,11 @@ class AIWR_Settings {
 	public function field_model() {
 		$settings = aiwr_get_settings();
 		?>
-		<input type="text" class="regular-text" spellcheck="false"
+		<input type="text" id="aiwr_model" class="regular-text" spellcheck="false"
+			aria-describedby="aiwr_model_desc"
 			name="<?php echo esc_attr( self::OPTION ); ?>[model]"
 			value="<?php echo esc_attr( $settings['model'] ); ?>" />
-		<p class="description">
+		<p class="description" id="aiwr_model_desc">
 			<?php esc_html_e( 'The model identifier string as documented by your provider.', 'wp-ai-writer' ); ?>
 		</p>
 		<?php
@@ -162,10 +164,11 @@ class AIWR_Settings {
 	public function field_budget() {
 		$settings = aiwr_get_settings();
 		?>
-		<input type="number" min="0" step="1" class="regular-text"
+		<input type="number" id="aiwr_monthly_budget_tokens" min="0" step="1" class="regular-text"
+			aria-describedby="aiwr_monthly_budget_tokens_desc"
 			name="<?php echo esc_attr( self::OPTION ); ?>[monthly_budget_tokens]"
 			value="<?php echo esc_attr( (string) $settings['monthly_budget_tokens'] ); ?>" />
-		<p class="description">
+		<p class="description" id="aiwr_monthly_budget_tokens_desc">
 			<?php esc_html_e( 'Combined input and output tokens allowed per calendar month. Set to 0 for no cap.', 'wp-ai-writer' ); ?>
 		</p>
 		<?php
@@ -177,10 +180,11 @@ class AIWR_Settings {
 	public function field_log_retention() {
 		$settings = aiwr_get_settings();
 		?>
-		<input type="number" min="0" step="1" class="regular-text"
+		<input type="number" id="aiwr_log_retention_days" min="0" step="1" class="regular-text"
+			aria-describedby="aiwr_log_retention_days_desc"
 			name="<?php echo esc_attr( self::OPTION ); ?>[log_retention_days]"
 			value="<?php echo esc_attr( (string) $settings['log_retention_days'] ); ?>" />
-		<p class="description">
+		<p class="description" id="aiwr_log_retention_days_desc">
 			<?php esc_html_e( 'Delete activity-log rows older than this many days. A daily task prunes them. Set to 0 to keep them forever.', 'wp-ai-writer' ); ?>
 		</p>
 		<?php
@@ -209,7 +213,7 @@ class AIWR_Settings {
 		$settings = aiwr_get_settings();
 		$value    = 0 < (float) $settings[ $key ] ? (string) $settings[ $key ] : '';
 		?>
-		<input type="number" min="0" step="0.000001" class="regular-text"
+		<input type="number" id="<?php echo esc_attr( 'aiwr_' . $key ); ?>" min="0" step="0.000001" class="regular-text"
 			name="<?php echo esc_attr( self::OPTION . '[' . $key . ']' ); ?>"
 			value="<?php echo esc_attr( $value ); ?>" />
 		<?php
