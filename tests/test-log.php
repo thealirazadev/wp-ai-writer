@@ -143,6 +143,78 @@ class AIWR_Test_Log extends WP_UnitTestCase {
 		$this->assertTrue( $this->row_exists( $fresh ) );
 	}
 
+	public function test_scheduled_prune_refreshes_the_usage_counter() {
+		update_option(
+			AIWR_Settings::OPTION,
+			array_merge( AIWR_Settings::defaults(), array( 'log_retention_days' => 30 ) )
+		);
+
+		$kept  = $this->insert_row(
+			array(
+				'input_tokens'  => 10,
+				'output_tokens' => 5,
+			)
+		);
+		$stale = $this->insert_row(
+			array(
+				'input_tokens'  => 100,
+				'output_tokens' => 50,
+			)
+		);
+		// 60 days is always older than the 30-day window and always a prior calendar month, so the
+		// assertions below do not drift with the date the suite runs on.
+		$this->backdate( $stale, 60 * DAY_IN_SECONDS );
+
+		// A deliberately wrong cached counter must be corrected once the prune removes a row.
+		update_option(
+			AIWR_Limits::USAGE_OPTION,
+			array(
+				'month'         => gmdate( 'Y-m' ),
+				'input_tokens'  => 999,
+				'output_tokens' => 999,
+			)
+		);
+
+		AIWR_Log::run_scheduled_prune();
+
+		$this->assertFalse( $this->row_exists( $stale ) );
+		$this->assertTrue( $this->row_exists( $kept ) );
+
+		$usage = AIWR_Limits::get_current_usage();
+		$this->assertSame( 10, $usage['input_tokens'] );
+		$this->assertSame( 5, $usage['output_tokens'] );
+	}
+
+	public function test_scheduled_prune_leaves_the_counter_untouched_when_nothing_is_deleted() {
+		update_option(
+			AIWR_Settings::OPTION,
+			array_merge( AIWR_Settings::defaults(), array( 'log_retention_days' => 30 ) )
+		);
+
+		$this->insert_row(
+			array(
+				'input_tokens'  => 10,
+				'output_tokens' => 5,
+			)
+		);
+
+		// A wrong counter must survive a prune that removes nothing (the refresh is skipped).
+		update_option(
+			AIWR_Limits::USAGE_OPTION,
+			array(
+				'month'         => gmdate( 'Y-m' ),
+				'input_tokens'  => 999,
+				'output_tokens' => 999,
+			)
+		);
+
+		AIWR_Log::run_scheduled_prune();
+
+		$usage = AIWR_Limits::get_current_usage();
+		$this->assertSame( 999, $usage['input_tokens'] );
+		$this->assertSame( 999, $usage['output_tokens'] );
+	}
+
 	private function backdate( $id, $seconds_ago ) {
 		global $wpdb;
 		$table = AIWR_Log::table();
