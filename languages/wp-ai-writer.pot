@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-22T23:08:51+00:00\n"
+"POT-Creation-Date: 2026-07-24T21:16:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-ai-writer\n"
@@ -248,71 +248,71 @@ msgstr ""
 msgid "Log retention (days)"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:139
+#: includes/class-aiwr-settings.php:140
 msgid "Leave the masked value to keep the stored key. Clear the field to delete it. Enter a new key to replace it."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:154
+#: includes/class-aiwr-settings.php:156
 msgid "The model identifier string as documented by your provider."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:169
+#: includes/class-aiwr-settings.php:172
 msgid "Combined input and output tokens allowed per calendar month. Set to 0 for no cap."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:184
+#: includes/class-aiwr-settings.php:188
 msgid "Delete activity-log rows older than this many days. A daily task prunes them. Set to 0 to keep them forever."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:248
+#: includes/class-aiwr-settings.php:252
 msgid "monthly token budget"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:255
+#: includes/class-aiwr-settings.php:259
 msgid "log retention"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:265
+#: includes/class-aiwr-settings.php:269
 msgid "token price"
 msgstr ""
 
 #. translators: %s: comma-separated list of rejected field names.
-#: includes/class-aiwr-settings.php:277
+#: includes/class-aiwr-settings.php:281
 #, php-format
 msgid "These values were invalid and were not saved: %s. Previous values were kept."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:319
+#: includes/class-aiwr-settings.php:323
 msgid "Usage this month"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:321
+#: includes/class-aiwr-settings.php:325
 msgid "No usage recorded this month."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:326
+#: includes/class-aiwr-settings.php:330
 msgid "Input tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:330
+#: includes/class-aiwr-settings.php:334
 msgid "Output tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:334
+#: includes/class-aiwr-settings.php:338
 msgid "Total tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:338
+#: includes/class-aiwr-settings.php:342
 msgid "Monthly budget"
 msgstr ""
 
 #. translators: 1: budget token count, 2: percent of budget used.
-#: includes/class-aiwr-settings.php:345
+#: includes/class-aiwr-settings.php:349
 #, php-format
 msgid "%1$s tokens (%2$d%% used)"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:350
+#: includes/class-aiwr-settings.php:354
 msgid "No cap"
 msgstr ""
 
@@ -324,15 +324,11 @@ msgstr ""
 msgid "AI Writer requires PHP 8.1 or newer and has been deactivated."
 msgstr ""
 
-#: src/actions/alt-text.js:16
-msgid "Image"
-msgstr ""
-
-#: src/actions/alt-text.js:39
+#: src/actions/alt-text.js:33
 msgid "Alt text ready."
 msgstr ""
 
-#: src/actions/alt-text.js:43
+#: src/actions/alt-text.js:37
 #: src/actions/draft.js:66
 #: src/actions/excerpt.js:62
 #: src/actions/rewrite.js:72
@@ -340,19 +336,25 @@ msgstr ""
 msgid "Something went wrong. Please try again."
 msgstr ""
 
-#: src/actions/alt-text.js:48
+#: src/actions/alt-text.js:42
 msgid "Alt text generation failed."
 msgstr ""
 
-#: src/actions/alt-text.js:63
+#: src/actions/alt-text.js:57
 msgid "Alt text applied."
 msgstr ""
 
-#: src/actions/alt-text.js:67
+#: src/actions/alt-text.js:61
 msgid "The alt text was added to the block but could not be saved to the media library."
 msgstr ""
 
-#: src/actions/alt-text.js:110
+#. translators: %s: image file name.
+#: src/actions/alt-text.js:101
+#, js-format
+msgid "Generate alt text for %s"
+msgstr ""
+
+#: src/actions/alt-text.js:107
 #: src/actions/draft.js:123
 #: src/actions/excerpt.js:103
 #: src/actions/rewrite.js:141
@@ -360,7 +362,7 @@ msgstr ""
 msgid "Generating"
 msgstr ""
 
-#: src/actions/alt-text.js:111
+#: src/actions/alt-text.js:108
 #: src/actions/draft.js:124
 #: src/actions/excerpt.js:104
 #: src/actions/rewrite.js:142
@@ -368,15 +370,21 @@ msgstr ""
 msgid "Generate"
 msgstr ""
 
+#. translators: %s: image file name.
 #: src/actions/alt-text.js:116
+#, js-format
+msgid "Apply alt text to %s"
+msgstr ""
+
+#: src/actions/alt-text.js:121
 msgid "Apply"
 msgstr ""
 
-#: src/actions/alt-text.js:139
+#: src/actions/alt-text.js:144
 msgid "All images have alt text."
 msgstr ""
 
-#: src/actions/alt-text.js:155
+#: src/actions/alt-text.js:160
 msgid "Some images use an external URL and are not supported yet."
 msgstr ""
 
@@ -557,7 +565,11 @@ msgstr ""
 msgid "Save meta description"
 msgstr ""
 
-#: src/components/result-preview.js:51
+#: src/components/result-preview.js:39
+msgid "Generated preview"
+msgstr ""
+
+#: src/components/result-preview.js:56
 msgid "Discard"
 msgstr ""
 
@@ -583,4 +595,8 @@ msgstr ""
 
 #: src/sidebar.js:24
 msgid "This action is coming in a later phase."
+msgstr ""
+
+#: src/utils/blocks.js:96
+msgid "Image"
 msgstr ""
