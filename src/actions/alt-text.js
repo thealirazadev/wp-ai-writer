@@ -1,7 +1,7 @@
 /**
  * Alt text action panel: list images missing alt text and fix them one at a time.
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState } from '@wordpress/element';
 import { Button, Spinner, Notice } from '@wordpress/components';
 import { useSelect, useDispatch } from '@wordpress/data';
@@ -9,21 +9,15 @@ import { store as blockEditorStore } from '@wordpress/block-editor';
 import { speak } from '@wordpress/a11y';
 
 import { generate } from '../api/client';
-import { findImagesMissingAlt } from '../utils/blocks';
-
-function fileName( url ) {
-	if ( ! url ) {
-		return __( 'Image', 'wp-ai-writer' );
-	}
-	const clean = url.split( '?' )[ 0 ].split( '#' )[ 0 ];
-	return clean.substring( clean.lastIndexOf( '/' ) + 1 ) || url;
-}
+import { findImagesMissingAlt, imageLabel } from '../utils/blocks';
 
 function AltTextRow( { image } ) {
 	const [ busy, setBusy ] = useState( false );
 	const [ alt, setAlt ] = useState( '' );
 	const [ error, setError ] = useState( null );
 	const { updateBlockAttributes } = useDispatch( blockEditorStore );
+
+	const name = imageLabel( image.url );
 
 	async function onGenerate() {
 		setBusy( true );
@@ -82,9 +76,7 @@ function AltTextRow( { image } ) {
 				height="40"
 			/>
 			<div className="aiwr-alt-row__body">
-				<span className="aiwr-alt-row__name">
-					{ fileName( image.url ) }
-				</span>
+				<span className="aiwr-alt-row__name">{ name }</span>
 
 				{ error && (
 					<Notice
@@ -104,6 +96,11 @@ function AltTextRow( { image } ) {
 						isBusy={ busy }
 						aria-disabled={ busy }
 						disabled={ busy }
+						aria-label={ sprintf(
+							/* translators: %s: image file name. */
+							__( 'Generate alt text for %s', 'wp-ai-writer' ),
+							name
+						) }
 						onClick={ onGenerate }
 					>
 						{ busy
@@ -112,7 +109,15 @@ function AltTextRow( { image } ) {
 					</Button>
 					{ busy && <Spinner /> }
 					{ alt && (
-						<Button variant="primary" onClick={ onApply }>
+						<Button
+							variant="primary"
+							aria-label={ sprintf(
+								/* translators: %s: image file name. */
+								__( 'Apply alt text to %s', 'wp-ai-writer' ),
+								name
+							) }
+							onClick={ onApply }
+						>
 							{ __( 'Apply', 'wp-ai-writer' ) }
 						</Button>
 					) }

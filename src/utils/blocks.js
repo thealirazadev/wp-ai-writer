@@ -2,6 +2,7 @@
  * Block helpers: html-to-blocks conversion, and later selected-block text and missing-alt scanning.
  */
 import { rawHandler } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Convert sanitized HTML into an array of blocks using core's raw-paste handler.
@@ -79,6 +80,24 @@ export function blockToText( block ) {
 		default:
 			return '';
 	}
+}
+
+/**
+ * Human-readable label for an image, derived from its URL's file name.
+ *
+ * Used to give the per-image alt-text controls distinct accessible names. Falls back to a generic
+ * label when the URL is empty or has no file segment.
+ *
+ * @param {string} url Image URL.
+ * @return {string} File name, or a generic "Image" label.
+ */
+export function imageLabel( url ) {
+	if ( ! url ) {
+		return __( 'Image', 'wp-ai-writer' );
+	}
+
+	const clean = String( url ).split( '?' )[ 0 ].split( '#' )[ 0 ];
+	return clean.substring( clean.lastIndexOf( '/' ) + 1 ) || url;
 }
 
 /**

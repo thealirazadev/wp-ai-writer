@@ -33,7 +33,12 @@ export default function ResultPreview( {
 	}
 
 	return (
-		<div className="aiwr-preview" aria-busy={ isStreaming }>
+		<div
+			className="aiwr-preview"
+			role="region"
+			aria-label={ __( 'Generated preview', 'wp-ai-writer' ) }
+			aria-busy={ isStreaming }
+		>
 			<div className="aiwr-preview__body">
 				{ toPreviewText( text ) }
 				{ isStreaming && (

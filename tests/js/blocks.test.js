@@ -15,6 +15,7 @@ import {
 	blockToText,
 	isRewritableBlock,
 	findImagesMissingAlt,
+	imageLabel,
 } from '../../src/utils/blocks';
 
 describe( 'htmlToBlocks', () => {
@@ -78,6 +79,24 @@ describe( 'blockToText', () => {
 		expect( blockToText( { name: 'core/image', attributes: {} } ) ).toBe(
 			''
 		);
+	} );
+} );
+
+describe( 'imageLabel', () => {
+	it( 'returns the file name from a URL', () => {
+		expect(
+			imageLabel( 'https://example.com/wp-content/uploads/photo.jpg' )
+		).toBe( 'photo.jpg' );
+	} );
+
+	it( 'strips query strings and fragments', () => {
+		expect( imageLabel( 'https://example.com/a/b/pic.png?v=2#frag' ) ).toBe(
+			'pic.png'
+		);
+	} );
+
+	it( 'falls back to a generic label for an empty URL', () => {
+		expect( imageLabel( '' ) ).toBe( 'Image' );
 	} );
 } );
 
