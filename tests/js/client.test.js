@@ -51,6 +51,33 @@ function sseResponse( chunks ) {
 	};
 }
 
+function sseThenReadError( chunks ) {
+	const encoder = new TextEncoder();
+	let i = 0;
+
+	return {
+		ok: true,
+		status: 200,
+		headers: {
+			get: ( h ) =>
+				'content-type' === h.toLowerCase() ? 'text/event-stream' : null,
+		},
+		body: {
+			getReader: () => ( {
+				read: async () => {
+					if ( i < chunks.length ) {
+						return {
+							done: false,
+							value: encoder.encode( chunks[ i++ ] ),
+						};
+					}
+					throw new Error( 'connection reset' );
+				},
+			} ),
+		},
+	};
+}
+
 beforeEach( () => {
 	window.aiwrEditor = {
 		restUrl: '/wp-json/aiwr/v1/generate',
@@ -254,6 +281,49 @@ describe( 'generate', () => {
 
 		expect( out.streamed ).toBe( false );
 		expect( out.result.html ).toBe( '<p>Downgraded</p>' );
+		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'does not retry when the stream drops after the first delta', async () => {
+		// A retry here would re-run generation and duplicate the already-shown content, so a
+		// transport failure once content has arrived must surface, not silently restart.
+		global.fetch = jest
+			.fn()
+			.mockResolvedValue(
+				sseThenReadError( [
+					'event: delta\ndata: {"text":"Compost "}\n\n',
+				] )
+			);
+
+		const error = await generate( {
+			action: 'draft',
+			stream: true,
+			input: { prompt: 'x' },
+		} ).catch( ( e ) => e );
+
+		expect( error ).toBeInstanceOf( AIWRError );
+		expect( error.code ).toBe( 'aiwr_stream_interrupted' );
+		expect( error.sawDelta ).toBe( true );
+		expect( error.retriable ).toBe( false );
+		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'does not retry when the stream ends without a done event after a delta', async () => {
+		global.fetch = jest
+			.fn()
+			.mockResolvedValue(
+				sseResponse( [ 'event: delta\ndata: {"text":"partial"}\n\n' ] )
+			);
+
+		const error = await generate( {
+			action: 'draft',
+			stream: true,
+			input: { prompt: 'x' },
+		} ).catch( ( e ) => e );
+
+		expect( error ).toBeInstanceOf( AIWRError );
+		expect( error.code ).toBe( 'aiwr_stream_incomplete' );
+		expect( error.sawDelta ).toBe( true );
 		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
 	} );
 
