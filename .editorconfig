@@ -1,0 +1,31 @@
+# EditorConfig: https://editorconfig.org
+# Matches the WordPress Coding Standards (PHP) and the @wordpress/scripts
+# defaults (JS/SCSS): tab indentation, LF line endings, UTF-8.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = tab
+
+# YAML does not allow tabs for indentation.
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# package.json, composer.json, and package-lock.json use two-space indentation.
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Trailing whitespace is significant in Markdown (two spaces = hard line break).
+[*.md]
+trim_trailing_whitespace = false
+
+# The generated translation template is tool-managed; leave it as emitted.
+[*.pot]
+insert_final_newline = false
+trim_trailing_whitespace = false
