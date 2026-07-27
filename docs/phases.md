@@ -303,11 +303,15 @@ endpoint, or its capability and nonce checks changes.
 ### Commits
 
 - `docs: add tone presets phase to phases.md`
-- `feat: add shared tone preset registry to the prompt builder`
-- `feat: apply the selected tone to the draft prompt`
+- `feat: add shared tone preset registry to the prompt builder` (also applies the tone to the draft
+  and rewrite prompts, folding the rewrite tone list into the registry)
+- `test: cover tone presets in the prompt builder`
 - `feat: validate the tone against the allowlist on the generate route`
+- `test: cover tone validation and injection on the generate route`
 - `feat: add a site default tone setting to the settings page`
+- `test: cover default tone validation in the settings sanitizer`
 - `feat: add a shared tone module and a draft tone selector`
+- `test: cover the shared tone module and tone request wiring`
 - `chore: regenerate the translation template for the tone strings`
 - `docs: record the tone presets feature in the readme and memory`
 

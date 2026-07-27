@@ -4,9 +4,11 @@
 [![License: GPL-2.0-or-later](https://img.shields.io/badge/license-GPL--2.0--or--later-blue.svg)](LICENSE)
 
 A WordPress plugin that adds a writing assistant to the block editor. Editors open a sidebar panel
-and can draft content from a prompt, rewrite the selected block with tone and length presets,
-generate an SEO title and meta description, summarize the post into an excerpt, and generate alt
-text for images that are missing it. Every request to the LLM provider API runs server-side through
+and can draft content from a prompt in a chosen tone, rewrite the selected block with tone and
+length presets, generate an SEO title and meta description, summarize the post into an excerpt, and
+generate alt text for images that are missing it. The tone presets (professional, friendly, concise,
+persuasive, casual, confident) are validated against a server-side allowlist and injected into the
+prompt; a site default tone is configurable in settings. Every request to the LLM provider API runs server-side through
 the plugin's REST proxy, with streaming responses, per-user rate limits, and a monthly token budget
 enforced on the server; the API key never reaches the browser.
 
@@ -39,9 +41,10 @@ define( 'AIWR_PROVIDER_ENDPOINT', 'https://your-provider.example/v1/generate' );
 ```
 
 The remaining configuration is entered on **Settings → AI Writer**: the provider API key (stored
-server-side, shown masked, never sent to the browser), the model identifier, the monthly token
-budget, optional per-million-token prices for cost estimates, and the activity-log retention window
-in days (a daily WP-Cron task prunes older rows; set it to 0 to keep the log forever). Usage for the
+server-side, shown masked, never sent to the browser), the model identifier, the default tone used
+for drafting and rewriting when the editor does not pick one, the monthly token budget, optional
+per-million-token prices for cost estimates, and the activity-log retention window in days (a daily
+WP-Cron task prunes older rows; set it to 0 to keep the log forever). Usage for the
 current month and the full activity log (**Tools → AI Writer Log**) are visible to administrators.
 
 Copy `.env.example` to `.env` for local development values (dev key, mock endpoint, model string).

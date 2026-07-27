@@ -121,6 +121,24 @@ every non-obvious decision with its reason.
   not feasible — `@wordpress/components` and the testing-library packages are not installed and adding
   them was out of scope — so a11y JS is verified through extracted pure helpers.
 
+- Phase 7 complete (tone and style presets, a v2 feature). One tone-preset registry is the source
+  of truth: `AIWR_Prompts::tones()` maps each allowed key to its prompt fragment, with
+  `tone_keys()`, `is_valid_tone()`, and `default_tone()` derived from it (keys: professional,
+  friendly, concise, persuasive, casual, confident). The prompt builder injects the fragment into
+  both the draft and rewrite user messages. The single generate route validates `options.tone`
+  against the allowlist for draft and rewrite via a shared `resolve_tone()` (supplied-but-invalid ->
+  aiwr_invalid_input 400; omitted -> site default, itself guarded to a valid key); the route's single
+  endpoint, capability, and nonce checks are unchanged. Settings gained a "Default tone" select
+  (`default_tone`, default professional) that validates and keeps-old like the other fields. The
+  sidebar draft panel gained a Tone select and the rewrite panel keeps its own, both from one shared
+  `src/tones.js`; the site default is localized to the client as `aiwrEditor.defaultTone` and
+  guarded again in JS. Provider stayed mocked everywhere (pre_http_request for PHP, stubbed fetch for
+  JS); a capturing PHP mock asserts the tone fragment reaches the outgoing prompt. Tests: PHPUnit
+  64 -> 75 (203 -> 246 assertions; +5 prompt, +3 REST, +3 settings), Jest 28 -> 34 (+5 tones module,
+  +1 client wiring). Gate green after every commit: phpcs, ESLint, php -l, build. Translation
+  template regenerated 138 -> 145 strings (generated with `--exclude=build` to match the repo
+  convention that the compiled build/ dir is not scanned). README intro and Configuration updated.
+
 ## In progress
 
 - Implementation complete. Remaining work is human-only: manual editor QA per docs/phases.md and
@@ -252,6 +270,18 @@ every non-obvious decision with its reason.
   computing the cutoff and running the delete. `run_scheduled_prune()` recomputes the usage counter
   after a prune because an aggressive retention could drop current-month rows the counter is derived
   from.
+- Tone presets are one shared allowlist, not two. Phase 3 shipped a rewrite-only tone list
+  (professional, friendly, casual, confident); Phase 7's brief adds tone to draft too and gives
+  example presets professional, friendly, concise, persuasive. Rather than keep a second copy, the
+  registry is the union of both (six keys), so every previously accepted rewrite tone stays valid
+  (additive, no Phase 3 regression) and the brief's new presets are covered. Prompt fragments are
+  model-facing text and stay untranslated in `AIWR_Prompts`; the human-readable labels live in the
+  two presentation layers (the settings select and `src/tones.js`), mirroring how the rewrite panel
+  already kept its labels in the UI. `resolve_tone()` on the route is the one validation point for
+  both actions; the prompt builder keeps its own professional fallback so a direct/unknown call
+  never emits an invalid fragment. Rewrite's default tone on an omitted value moved from a hardcoded
+  `professional` to the site default (which defaults to professional, so behaviour is unchanged
+  unless an admin sets it).
 - The `alt_text` capability check uses `edit_post` on the attachment, which is deliberately strict:
   an author cannot generate alt text for library media uploaded by someone else, because
   `edit_post` on an attachment requires `edit_others_posts` for non-owners. Chosen over the looser
