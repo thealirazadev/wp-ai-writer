@@ -49,6 +49,7 @@ class AIWR_Test_Settings extends WP_UnitTestCase {
 
 		$this->assertSame( 'aiwr_api_key', $label_fors['aiwr_api_key'] );
 		$this->assertSame( 'aiwr_model', $label_fors['aiwr_model'] );
+		$this->assertSame( 'aiwr_default_tone', $label_fors['aiwr_default_tone'] );
 		$this->assertSame( 'aiwr_monthly_budget_tokens', $label_fors['aiwr_budget_field'] );
 		$this->assertSame( 'aiwr_log_retention_days', $label_fors['aiwr_log_retention'] );
 
@@ -61,5 +62,56 @@ class AIWR_Test_Settings extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'id="aiwr_api_key"', $api_html );
 		$this->assertStringContainsString( 'aria-describedby="aiwr_api_key_desc"', $api_html );
 		$this->assertStringContainsString( 'id="aiwr_api_key_desc"', $api_html );
+	}
+
+	public function test_default_tone_field_renders_the_allowlist_options() {
+		update_option( AIWR_Settings::OPTION, AIWR_Settings::defaults() );
+
+		ob_start();
+		( new AIWR_Settings() )->field_default_tone();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'id="aiwr_default_tone"', $html );
+		$this->assertStringContainsString( 'aria-describedby="aiwr_default_tone_desc"', $html );
+
+		foreach ( AIWR_Prompts::tone_keys() as $tone ) {
+			$this->assertStringContainsString( 'value="' . $tone . '"', $html );
+		}
+	}
+
+	public function test_sanitize_accepts_a_valid_default_tone() {
+		update_option( AIWR_Settings::OPTION, AIWR_Settings::defaults() );
+
+		$out = ( new AIWR_Settings() )->sanitize(
+			array(
+				'model'                 => 'a-model',
+				'default_tone'          => 'persuasive',
+				'monthly_budget_tokens' => 1000,
+				'log_retention_days'    => 30,
+			)
+		);
+
+		$this->assertSame( 'persuasive', $out['default_tone'] );
+	}
+
+	public function test_sanitize_rejects_an_invalid_default_tone_and_keeps_the_old_value() {
+		global $wp_settings_errors;
+		$wp_settings_errors = array();
+
+		$stored                 = AIWR_Settings::defaults();
+		$stored['default_tone'] = 'friendly';
+		update_option( AIWR_Settings::OPTION, $stored );
+
+		$out = ( new AIWR_Settings() )->sanitize(
+			array(
+				'model'                 => 'a-model',
+				'default_tone'          => 'zany',
+				'monthly_budget_tokens' => 1000,
+				'log_retention_days'    => 30,
+			)
+		);
+
+		$this->assertSame( 'friendly', $out['default_tone'] );
+		$this->assertNotEmpty( get_settings_errors( AIWR_Settings::OPTION ) );
 	}
 }
