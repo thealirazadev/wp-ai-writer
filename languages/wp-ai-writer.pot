@@ -9,15 +9,15 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-24T21:16:02+00:00\n"
+"POT-Creation-Date: 2026-07-27T06:16:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-ai-writer\n"
 
 #. Plugin Name of the plugin
 #: wp-ai-writer.php
-#: includes/class-aiwr-settings.php:69
 #: includes/class-aiwr-settings.php:70
+#: includes/class-aiwr-settings.php:71
 #: src/index.js:17
 #: src/index.js:21
 msgid "AI Writer"
@@ -139,180 +139,230 @@ msgstr ""
 msgid "The writing assistant is not configured yet. Ask an administrator to add the provider key and model."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:375
+#: includes/class-aiwr-rest.php:376
 msgid "Enter a prompt to generate a draft."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:379
+#: includes/class-aiwr-rest.php:380
 msgid "The prompt must be 2000 characters or fewer."
-msgstr ""
-
-#: includes/class-aiwr-rest.php:400
-msgid "Select a block with text to rewrite."
-msgstr ""
-
-#: includes/class-aiwr-rest.php:404
-msgid "The selected text must be 8000 characters or fewer."
 msgstr ""
 
 #: includes/class-aiwr-rest.php:412
 msgid "Choose a valid tone."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:416
+#: includes/class-aiwr-rest.php:436
+msgid "Select a block with text to rewrite."
+msgstr ""
+
+#: includes/class-aiwr-rest.php:440
+msgid "The selected text must be 8000 characters or fewer."
+msgstr ""
+
+#: includes/class-aiwr-rest.php:453
 msgid "Choose a valid length."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:443
+#: includes/class-aiwr-rest.php:480
 msgid "Add some content to the post before generating SEO text."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:469
+#: includes/class-aiwr-rest.php:506
 msgid "Add some content to the post before generating an excerpt."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:492
+#: includes/class-aiwr-rest.php:529
 msgid "Select an image to describe."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:518
+#: includes/class-aiwr-rest.php:555
 msgid "Select an image to update."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:522
+#: includes/class-aiwr-rest.php:559
 msgid "Generate alt text before applying it."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:532
-#: includes/class-aiwr-rest.php:633
+#: includes/class-aiwr-rest.php:569
+#: includes/class-aiwr-rest.php:670
 msgid "You are not allowed to use that image."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:566
+#: includes/class-aiwr-rest.php:603
 msgid "Save the post before applying SEO text."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:570
+#: includes/class-aiwr-rest.php:607
 msgid "Generate a meta description before applying it."
 msgstr ""
 
-#: includes/class-aiwr-rest.php:679
+#: includes/class-aiwr-rest.php:716
 msgid "That image could not be read. It may be missing, too large, or an unsupported type."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:93
+#: includes/class-aiwr-settings.php:94
 msgid "Provider"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:95
+#: includes/class-aiwr-settings.php:96
 msgid "Connection to the LLM provider API. The key is stored on the server and never sent to the browser."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:100
+#: includes/class-aiwr-settings.php:101
 msgid "API key"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:101
+#: includes/class-aiwr-settings.php:102
 msgid "Model identifier"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:105
-msgid "Budget and pricing"
+#: includes/class-aiwr-settings.php:106
+msgid "Writing defaults"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:107
-msgid "Cap monthly usage and optionally estimate spend. Leave prices blank to skip cost estimates."
-msgstr ""
-
-#: includes/class-aiwr-settings.php:112
-msgid "Monthly token budget"
+#: includes/class-aiwr-settings.php:108
+msgid "Defaults applied to generation. Editors can override the tone per request in the sidebar."
 msgstr ""
 
 #: includes/class-aiwr-settings.php:113
-msgid "Input price (per million tokens)"
+msgid "Default tone"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:114
-msgid "Output price (per million tokens)"
+#: includes/class-aiwr-settings.php:117
+msgid "Budget and pricing"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:118
-msgid "Activity log"
+#: includes/class-aiwr-settings.php:119
+msgid "Cap monthly usage and optionally estimate spend. Leave prices blank to skip cost estimates."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:120
-msgid "Control how long request history is kept."
+#: includes/class-aiwr-settings.php:124
+msgid "Monthly token budget"
 msgstr ""
 
 #: includes/class-aiwr-settings.php:125
+msgid "Input price (per million tokens)"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:126
+msgid "Output price (per million tokens)"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:130
+msgid "Activity log"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:132
+msgid "Control how long request history is kept."
+msgstr ""
+
+#: includes/class-aiwr-settings.php:137
 msgid "Log retention (days)"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:140
+#: includes/class-aiwr-settings.php:152
 msgid "Leave the masked value to keep the stored key. Clear the field to delete it. Enter a new key to replace it."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:156
+#: includes/class-aiwr-settings.php:168
 msgid "The model identifier string as documented by your provider."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:172
+#: includes/class-aiwr-settings.php:180
+#: src/tones.js:13
+msgid "Professional"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:181
+#: src/tones.js:14
+msgid "Friendly"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:182
+#: src/tones.js:15
+msgid "Concise"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:183
+#: src/tones.js:16
+msgid "Persuasive"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:184
+#: src/tones.js:17
+msgid "Casual"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:185
+#: src/tones.js:18
+msgid "Confident"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:197
+msgid "The tone used for the draft and rewrite actions when the editor does not pick one."
+msgstr ""
+
+#: includes/class-aiwr-settings.php:213
 msgid "Combined input and output tokens allowed per calendar month. Set to 0 for no cap."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:188
+#: includes/class-aiwr-settings.php:229
 msgid "Delete activity-log rows older than this many days. A daily task prunes them. Set to 0 to keep them forever."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:252
+#: includes/class-aiwr-settings.php:295
+msgid "default tone"
+msgstr ""
+
+#: includes/class-aiwr-settings.php:300
 msgid "monthly token budget"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:259
+#: includes/class-aiwr-settings.php:307
 msgid "log retention"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:269
+#: includes/class-aiwr-settings.php:317
 msgid "token price"
 msgstr ""
 
 #. translators: %s: comma-separated list of rejected field names.
-#: includes/class-aiwr-settings.php:281
+#: includes/class-aiwr-settings.php:329
 #, php-format
 msgid "These values were invalid and were not saved: %s. Previous values were kept."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:323
+#: includes/class-aiwr-settings.php:371
 msgid "Usage this month"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:325
+#: includes/class-aiwr-settings.php:373
 msgid "No usage recorded this month."
 msgstr ""
 
-#: includes/class-aiwr-settings.php:330
+#: includes/class-aiwr-settings.php:378
 msgid "Input tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:334
+#: includes/class-aiwr-settings.php:382
 msgid "Output tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:338
+#: includes/class-aiwr-settings.php:386
 msgid "Total tokens"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:342
+#: includes/class-aiwr-settings.php:390
 msgid "Monthly budget"
 msgstr ""
 
 #. translators: 1: budget token count, 2: percent of budget used.
-#: includes/class-aiwr-settings.php:349
+#: includes/class-aiwr-settings.php:397
 #, php-format
 msgid "%1$s tokens (%2$d%% used)"
 msgstr ""
 
-#: includes/class-aiwr-settings.php:354
+#: includes/class-aiwr-settings.php:402
 msgid "No cap"
 msgstr ""
 
@@ -329,9 +379,9 @@ msgid "Alt text ready."
 msgstr ""
 
 #: src/actions/alt-text.js:37
-#: src/actions/draft.js:66
+#: src/actions/draft.js:70
 #: src/actions/excerpt.js:62
-#: src/actions/rewrite.js:72
+#: src/actions/rewrite.js:66
 #: src/actions/seo.js:68
 msgid "Something went wrong. Please try again."
 msgstr ""
@@ -355,17 +405,17 @@ msgid "Generate alt text for %s"
 msgstr ""
 
 #: src/actions/alt-text.js:107
-#: src/actions/draft.js:123
+#: src/actions/draft.js:135
 #: src/actions/excerpt.js:103
-#: src/actions/rewrite.js:141
+#: src/actions/rewrite.js:135
 #: src/actions/seo.js:135
 msgid "Generating"
 msgstr ""
 
 #: src/actions/alt-text.js:108
-#: src/actions/draft.js:124
+#: src/actions/draft.js:136
 #: src/actions/excerpt.js:104
-#: src/actions/rewrite.js:142
+#: src/actions/rewrite.js:136
 #: src/actions/seo.js:136
 msgid "Generate"
 msgstr ""
@@ -388,40 +438,45 @@ msgstr ""
 msgid "Some images use an external URL and are not supported yet."
 msgstr ""
 
-#: src/actions/draft.js:59
+#: src/actions/draft.js:63
 msgid "Draft ready."
 msgstr ""
 
-#: src/actions/draft.js:71
+#: src/actions/draft.js:75
 msgid "Draft generation failed."
 msgstr ""
 
-#: src/actions/draft.js:82
+#: src/actions/draft.js:86
 msgid "Draft inserted into the post."
 msgstr ""
 
-#: src/actions/draft.js:92
+#: src/actions/draft.js:96
 msgid "Prompt"
 msgstr ""
 
 #. translators: %d: maximum prompt length.
-#: src/actions/draft.js:97
+#: src/actions/draft.js:101
 #, js-format
 msgid "Prompts must be %d characters or fewer."
 msgstr ""
 
-#: src/actions/draft.js:103
+#: src/actions/draft.js:107
 msgid "Describe what you want written."
 msgstr ""
 
-#: src/actions/draft.js:136
+#: src/actions/draft.js:119
+#: src/actions/rewrite.js:112
+msgid "Tone"
+msgstr ""
+
+#: src/actions/draft.js:148
 #: src/actions/excerpt.js:116
-#: src/actions/rewrite.js:154
+#: src/actions/rewrite.js:148
 #: src/actions/seo.js:148
 msgid "The writing assistant is not configured yet. Ask an administrator to set it up."
 msgstr ""
 
-#: src/actions/draft.js:149
+#: src/actions/draft.js:161
 msgid "Insert into post"
 msgstr ""
 
@@ -445,63 +500,43 @@ msgstr ""
 msgid "Apply to excerpt"
 msgstr ""
 
-#: src/actions/rewrite.js:16
-msgid "Professional"
-msgstr ""
-
 #: src/actions/rewrite.js:17
-msgid "Friendly"
-msgstr ""
-
-#: src/actions/rewrite.js:18
-msgid "Casual"
-msgstr ""
-
-#: src/actions/rewrite.js:19
-msgid "Confident"
-msgstr ""
-
-#: src/actions/rewrite.js:23
 msgid "Shorter"
 msgstr ""
 
-#: src/actions/rewrite.js:24
+#: src/actions/rewrite.js:18
 msgid "Same length"
 msgstr ""
 
-#: src/actions/rewrite.js:25
+#: src/actions/rewrite.js:19
 msgid "Longer"
 msgstr ""
 
-#: src/actions/rewrite.js:65
+#: src/actions/rewrite.js:59
 msgid "Rewrite ready."
 msgstr ""
 
-#: src/actions/rewrite.js:77
+#: src/actions/rewrite.js:71
 msgid "Rewrite failed."
 msgstr ""
 
-#: src/actions/rewrite.js:88
+#: src/actions/rewrite.js:82
 msgid "Block content replaced."
 msgstr ""
 
-#: src/actions/rewrite.js:99
+#: src/actions/rewrite.js:93
 msgid "Select a paragraph, heading, list, or quote block to rewrite."
 msgstr ""
 
-#: src/actions/rewrite.js:112
+#: src/actions/rewrite.js:106
 msgid "Selected text"
 msgstr ""
 
-#: src/actions/rewrite.js:118
-msgid "Tone"
-msgstr ""
-
-#: src/actions/rewrite.js:125
+#: src/actions/rewrite.js:119
 msgid "Length"
 msgstr ""
 
-#: src/actions/rewrite.js:167
+#: src/actions/rewrite.js:161
 msgid "Replace block content"
 msgstr ""
 
