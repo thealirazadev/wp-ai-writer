@@ -21,6 +21,13 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 	 */
 	private $provider_called = false;
 
+	/**
+	 * The request body the mocked provider received, for asserting the assembled prompt.
+	 *
+	 * @var string
+	 */
+	private $captured_body = '';
+
 	public function set_up() {
 		parent::set_up();
 
@@ -41,6 +48,7 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 
 		delete_option( AIWR_Limits::USAGE_OPTION );
 		$this->provider_called = false;
+		$this->captured_body   = '';
 	}
 
 	public function tear_down() {
@@ -96,6 +104,35 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 							'usage'   => array(
 								'input_tokens'  => 50,
 								'output_tokens' => 25,
+							),
+						)
+					),
+				);
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Mock the provider with a success body while capturing the outgoing request body.
+	 */
+	private function mock_provider_capture() {
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args ) {
+				$this->provider_called = true;
+				$this->captured_body   = isset( $args['body'] ) ? (string) $args['body'] : '';
+
+				return array(
+					'response' => array( 'code' => 200 ),
+					'headers'  => array(),
+					'body'     => wp_json_encode(
+						array(
+							'content' => '<p>Drafted.</p>',
+							'usage'   => array(
+								'input_tokens'  => 10,
+								'output_tokens' => 5,
 							),
 						)
 					),
@@ -223,6 +260,50 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertSame( 60, $usage['output_tokens'] );
 
 		$this->assertSame( 1, $this->log_row_count( 'success' ) );
+	}
+
+	public function test_draft_rejects_an_invalid_tone() {
+		$this->mock_provider_capture();
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array( 'options' => array( 'tone' => 'zany' ) )
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'aiwr_invalid_input', $response->get_data()['code'] );
+		$this->assertFalse( $this->provider_called );
+	}
+
+	public function test_draft_injects_the_selected_tone_into_the_prompt() {
+		$this->mock_provider_capture();
+
+		$response = $this->dispatch_draft(
+			$this->editor_id(),
+			array( 'options' => array( 'tone' => 'persuasive' ) )
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $this->provider_called );
+		$this->assertStringContainsString( 'persuasive', $this->captured_body );
+	}
+
+	public function test_draft_applies_the_site_default_tone_when_none_supplied() {
+		update_option(
+			AIWR_Settings::OPTION,
+			array(
+				'api_key'      => 'test-secret-key-1234',
+				'model'        => 'configured-model',
+				'default_tone' => 'concise',
+			)
+		);
+		$this->mock_provider_capture();
+
+		$response = $this->dispatch_draft( $this->editor_id() );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertStringContainsString( 'concise', $this->captured_body );
+		$this->assertStringNotContainsString( 'persuasive', $this->captured_body );
 	}
 
 	public function test_key_never_appears_in_the_response() {
