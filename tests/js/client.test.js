@@ -148,6 +148,26 @@ describe( 'generate', () => {
 		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
 	} );
 
+	it( 'forwards the selected tone in the request options', async () => {
+		global.fetch = jest.fn().mockResolvedValue(
+			jsonResponse( {
+				action: 'draft',
+				result: { html: '<p>Hi</p>' },
+				usage: { input_tokens: 1, output_tokens: 1 },
+				cost_estimate: null,
+			} )
+		);
+
+		await generate( {
+			action: 'draft',
+			input: { prompt: 'hi' },
+			options: { tone: 'persuasive' },
+		} );
+
+		const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+		expect( body.options.tone ).toBe( 'persuasive' );
+	} );
+
 	it( 'throws the server envelope on a JSON error', async () => {
 		global.fetch = jest.fn().mockResolvedValue(
 			jsonResponse(
