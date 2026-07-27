@@ -347,7 +347,7 @@ class AIWR_Rest {
 
 		switch ( $action ) {
 			case 'draft':
-				return $this->validate_draft( $input );
+				return $this->validate_draft( $input, $request->get_param( 'options' ) );
 			case 'rewrite':
 				return $this->validate_rewrite( $input, $request->get_param( 'options' ) );
 			case 'seo':
@@ -362,12 +362,13 @@ class AIWR_Rest {
 	}
 
 	/**
-	 * Validate the draft action input.
+	 * Validate the draft action input and tone option.
 	 *
-	 * @param array $input Raw input.
+	 * @param array $input   Raw input.
+	 * @param mixed $options Raw options.
 	 * @return array{input:array,options:array}|WP_Error
 	 */
-	private function validate_draft( array $input ) {
+	private function validate_draft( array $input, $options ) {
 		$prompt = isset( $input['prompt'] ) ? trim( sanitize_textarea_field( (string) $input['prompt'] ) ) : '';
 		$length = mb_strlen( $prompt );
 
@@ -379,10 +380,45 @@ class AIWR_Rest {
 			return $this->invalid( __( 'The prompt must be 2000 characters or fewer.', 'wp-ai-writer' ) );
 		}
 
+		$tone = $this->resolve_tone( $options );
+
+		if ( is_wp_error( $tone ) ) {
+			return $tone;
+		}
+
 		return array(
 			'input'   => array( 'prompt' => $prompt ),
-			'options' => array(),
+			'options' => array( 'tone' => $tone ),
 		);
+	}
+
+	/**
+	 * Resolve the requested tone to a valid allowlisted key.
+	 *
+	 * A supplied tone outside the allowlist is rejected; an omitted tone falls back to the site
+	 * default tone, and the site default is itself guarded so a stale option can never inject an
+	 * unknown value into the prompt.
+	 *
+	 * @param mixed $options Raw options.
+	 * @return string|WP_Error Valid tone key, or an invalid-input error.
+	 */
+	private function resolve_tone( $options ) {
+		$options = is_array( $options ) ? $options : array();
+
+		if ( isset( $options['tone'] ) && '' !== $options['tone'] ) {
+			$tone = sanitize_key( (string) $options['tone'] );
+
+			if ( ! AIWR_Prompts::is_valid_tone( $tone ) ) {
+				return $this->invalid( __( 'Choose a valid tone.', 'wp-ai-writer' ) );
+			}
+
+			return $tone;
+		}
+
+		$settings = aiwr_get_settings();
+		$default  = isset( $settings['default_tone'] ) ? (string) $settings['default_tone'] : AIWR_Prompts::default_tone();
+
+		return AIWR_Prompts::is_valid_tone( $default ) ? $default : AIWR_Prompts::default_tone();
 	}
 
 	/**
@@ -405,12 +441,13 @@ class AIWR_Rest {
 		}
 
 		$options = is_array( $options ) ? $options : array();
-		$tone    = isset( $options['tone'] ) ? sanitize_key( $options['tone'] ) : 'professional';
-		$len     = isset( $options['length'] ) ? sanitize_key( $options['length'] ) : 'same';
+		$tone    = $this->resolve_tone( $options );
 
-		if ( ! in_array( $tone, array( 'professional', 'friendly', 'casual', 'confident' ), true ) ) {
-			return $this->invalid( __( 'Choose a valid tone.', 'wp-ai-writer' ) );
+		if ( is_wp_error( $tone ) ) {
+			return $tone;
 		}
+
+		$len = isset( $options['length'] ) ? sanitize_key( $options['length'] ) : 'same';
 
 		if ( ! in_array( $len, array( 'shorter', 'same', 'longer' ), true ) ) {
 			return $this->invalid( __( 'Choose a valid length.', 'wp-ai-writer' ) );
