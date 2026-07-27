@@ -22,7 +22,7 @@ class AIWR_Settings {
 	/**
 	 * Default settings values.
 	 *
-	 * @return array{api_key:string,model:string,monthly_budget_tokens:int,price_input_per_mtok:float,price_output_per_mtok:float,log_retention_days:int}
+	 * @return array{api_key:string,model:string,monthly_budget_tokens:int,price_input_per_mtok:float,price_output_per_mtok:float,log_retention_days:int,default_tone:string}
 	 */
 	public static function defaults() {
 		return array(
@@ -32,6 +32,7 @@ class AIWR_Settings {
 			'price_input_per_mtok'  => 0.0,
 			'price_output_per_mtok' => 0.0,
 			'log_retention_days'    => 90,
+			'default_tone'          => AIWR_Prompts::default_tone(),
 		);
 	}
 
@@ -101,6 +102,17 @@ class AIWR_Settings {
 		add_settings_field( 'aiwr_model', __( 'Model identifier', 'wp-ai-writer' ), array( $this, 'field_model' ), self::PAGE, 'aiwr_provider', array( 'label_for' => 'aiwr_model' ) );
 
 		add_settings_section(
+			'aiwr_writing',
+			__( 'Writing defaults', 'wp-ai-writer' ),
+			static function () {
+				echo '<p>' . esc_html__( 'Defaults applied to generation. Editors can override the tone per request in the sidebar.', 'wp-ai-writer' ) . '</p>';
+			},
+			self::PAGE
+		);
+
+		add_settings_field( 'aiwr_default_tone', __( 'Default tone', 'wp-ai-writer' ), array( $this, 'field_default_tone' ), self::PAGE, 'aiwr_writing', array( 'label_for' => 'aiwr_default_tone' ) );
+
+		add_settings_section(
 			'aiwr_budget',
 			__( 'Budget and pricing', 'wp-ai-writer' ),
 			static function () {
@@ -154,6 +166,35 @@ class AIWR_Settings {
 			value="<?php echo esc_attr( $settings['model'] ); ?>" />
 		<p class="description" id="aiwr_model_desc">
 			<?php esc_html_e( 'The model identifier string as documented by your provider.', 'wp-ai-writer' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the default tone select over the shared tone-preset allowlist.
+	 */
+	public function field_default_tone() {
+		$settings = aiwr_get_settings();
+		$current  = AIWR_Prompts::is_valid_tone( $settings['default_tone'] ) ? $settings['default_tone'] : AIWR_Prompts::default_tone();
+		$labels   = array(
+			'professional' => __( 'Professional', 'wp-ai-writer' ),
+			'friendly'     => __( 'Friendly', 'wp-ai-writer' ),
+			'concise'      => __( 'Concise', 'wp-ai-writer' ),
+			'persuasive'   => __( 'Persuasive', 'wp-ai-writer' ),
+			'casual'       => __( 'Casual', 'wp-ai-writer' ),
+			'confident'    => __( 'Confident', 'wp-ai-writer' ),
+		);
+		?>
+		<select id="aiwr_default_tone" aria-describedby="aiwr_default_tone_desc"
+			name="<?php echo esc_attr( self::OPTION ); ?>[default_tone]">
+			<?php foreach ( AIWR_Prompts::tone_keys() as $tone ) : ?>
+				<option value="<?php echo esc_attr( $tone ); ?>" <?php selected( $current, $tone ); ?>>
+					<?php echo esc_html( isset( $labels[ $tone ] ) ? $labels[ $tone ] : $tone ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+		<p class="description" id="aiwr_default_tone_desc">
+			<?php esc_html_e( 'The tone used for the draft and rewrite actions when the editor does not pick one.', 'wp-ai-writer' ); ?>
 		</p>
 		<?php
 	}
@@ -246,6 +287,13 @@ class AIWR_Settings {
 		}
 
 		$out['model'] = isset( $raw['model'] ) ? sanitize_text_field( wp_unslash( $raw['model'] ) ) : $stored['model'];
+
+		$tone = isset( $raw['default_tone'] ) ? sanitize_key( wp_unslash( $raw['default_tone'] ) ) : '';
+		if ( AIWR_Prompts::is_valid_tone( $tone ) ) {
+			$out['default_tone'] = $tone;
+		} else {
+			$errors[] = __( 'default tone', 'wp-ai-writer' );
+		}
 
 		$budget = isset( $raw['monthly_budget_tokens'] ) ? wp_unslash( $raw['monthly_budget_tokens'] ) : '';
 		if ( ! is_numeric( $budget ) || (int) $budget < 0 ) {
