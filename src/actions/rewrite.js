@@ -10,14 +10,8 @@ import { speak } from '@wordpress/a11y';
 
 import { generate } from '../api/client';
 import { htmlToBlocks, blockToText, isRewritableBlock } from '../utils/blocks';
+import { TONES, siteDefaultTone } from '../tones';
 import ResultPreview from '../components/result-preview';
-
-const TONES = [
-	{ value: 'professional', label: __( 'Professional', 'wp-ai-writer' ) },
-	{ value: 'friendly', label: __( 'Friendly', 'wp-ai-writer' ) },
-	{ value: 'casual', label: __( 'Casual', 'wp-ai-writer' ) },
-	{ value: 'confident', label: __( 'Confident', 'wp-ai-writer' ) },
-];
 
 const LENGTHS = [
 	{ value: 'shorter', label: __( 'Shorter', 'wp-ai-writer' ) },
@@ -26,7 +20,7 @@ const LENGTHS = [
 ];
 
 export default function RewritePanel() {
-	const [ tone, setTone ] = useState( 'professional' );
+	const [ tone, setTone ] = useState( siteDefaultTone() );
 	const [ length, setLength ] = useState( 'same' );
 	const [ busy, setBusy ] = useState( false );
 	const [ streaming, setStreaming ] = useState( false );

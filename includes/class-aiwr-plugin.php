@@ -84,12 +84,16 @@ class AIWR_Plugin {
 
 		wp_set_script_translations( 'aiwr-editor', 'wp-ai-writer', AIWR_PATH . 'languages' );
 
+		$settings     = aiwr_get_settings();
+		$default_tone = AIWR_Prompts::is_valid_tone( $settings['default_tone'] ) ? $settings['default_tone'] : AIWR_Prompts::default_tone();
+
 		wp_localize_script(
 			'aiwr-editor',
 			'aiwrEditor',
 			array(
-				'restUrl' => esc_url_raw( rest_url( 'aiwr/v1/generate' ) ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'restUrl'     => esc_url_raw( rest_url( 'aiwr/v1/generate' ) ),
+				'nonce'       => wp_create_nonce( 'wp_rest' ),
+				'defaultTone' => $default_tone,
 			)
 		);
 

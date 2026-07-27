@@ -5,6 +5,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { useState } from '@wordpress/element';
 import {
 	TextareaControl,
+	SelectControl,
 	Button,
 	Spinner,
 	Notice,
@@ -16,12 +17,14 @@ import { speak } from '@wordpress/a11y';
 
 import { generate } from '../api/client';
 import { htmlToBlocks } from '../utils/blocks';
+import { TONES, siteDefaultTone } from '../tones';
 import ResultPreview from '../components/result-preview';
 
 const MAX_PROMPT = 2000;
 
 export default function DraftPanel() {
 	const [ prompt, setPrompt ] = useState( '' );
+	const [ tone, setTone ] = useState( siteDefaultTone() );
 	const [ busy, setBusy ] = useState( false );
 	const [ streaming, setStreaming ] = useState( false );
 	const [ preview, setPreview ] = useState( '' );
@@ -49,6 +52,7 @@ export default function DraftPanel() {
 				stream: true,
 				postId,
 				input: { prompt: prompt.trim() },
+				options: { tone },
 				onDelta: ( text ) => setPreview( text ),
 			} );
 
@@ -108,6 +112,14 @@ export default function DraftPanel() {
 				value={ prompt }
 				onChange={ setPrompt }
 				rows={ 4 }
+				__nextHasNoMarginBottom
+			/>
+
+			<SelectControl
+				label={ __( 'Tone', 'wp-ai-writer' ) }
+				value={ tone }
+				options={ TONES }
+				onChange={ setTone }
 				__nextHasNoMarginBottom
 			/>
 
