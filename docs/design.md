@@ -12,7 +12,7 @@ system, no bundled fonts, no external assets.
   properties. Accent = admin theme accent (default `#2271b1`), destructive = `#d63638`, success =
   `#00a32a`, warning = `#dba617`, muted text = `#757575`, borders = `#ddd`. Never hardcode these
   where a component or `var(--wp-admin-theme-color)` provides them.
-- Status colors are always paired with text ("Failed", "Estimated") — never color-only signals.
+- Status colors are always paired with text ("Failed", "Estimated") - never color-only signals.
 - Settings and log screens use stock wp-admin markup (`.form-table`, `WP_List_Table`) and take
   their colors from core.
 
@@ -43,16 +43,16 @@ system, no bundled fonts, no external assets.
 ## Component states
 
 - Generate button (`Button variant="primary"`): default, hover/focus (core), disabled (empty or
-  over-cap input, no supported block selected, request in flight), busy (in flight — `isBusy` with
+  over-cap input, no supported block selected, request in flight), busy (in flight - `isBusy` with
   inline `Spinner`, label switches to "Generating").
-- Preview area: empty (hidden entirely — no empty box), streaming (`aria-busy="true"`, text
+- Preview area: empty (hidden entirely - no empty box), streaming (`aria-busy="true"`, text
   appending, subtle pulsing caret at the end), complete (apply/discard row appears), error
   (replaced by an error `Notice`).
 - Apply buttons ("Insert into post", "Replace block content", "Use as post title", "Apply to
-  excerpt", per-image "Apply"): primary variant, explicit verbs — never "OK". Discard is a
+  excerpt", per-image "Apply"): primary variant, explicit verbs - never "OK". Discard is a
   tertiary/link button. Both disabled while a stream is active.
 - Notices (`Notice` component): error (friendly server `message` verbatim), warning (budget nearly
-  exhausted is out of scope for v1 — budget errors only), info (not-configured guidance),
+  exhausted is out of scope for v1 - budget errors only), info (not-configured guidance),
   dismissible except the not-configured state.
 - Alt text list rows: thumbnail (40px), filename, per-row Generate/Apply buttons with the same
   states; loading state per row, not global.
@@ -60,7 +60,7 @@ system, no bundled fonts, no external assets.
 - Settings fields: masked key field with description text; inline validation errors via the
   Settings API notice; usage panel shows an empty state ("No usage recorded this month") before
   first use.
-- Log screen: standard `WP_List_Table` states — rows, pagination, and an empty state message.
+- Log screen: standard `WP_List_Table` states - rows, pagination, and an empty state message.
 
 ## Loading, empty, and long-content behavior
 
@@ -81,10 +81,10 @@ system, no bundled fonts, no external assets.
   keys (core `TabPanel` behavior); no keyboard traps; Escape does not silently discard a result
   (Discard is an explicit button).
 - Visible focus states everywhere (core focus ring; never disable outlines).
-- Streaming announcements: the preview region sets `aria-busy` during the stream — no `aria-live`
+- Streaming announcements: the preview region sets `aria-busy` during the stream - no `aria-live`
   on the rapidly-updating text (which would flood screen readers). Completion, errors, apply
   confirmations, and "Copied" are announced with `speak()` from `@wordpress/a11y`.
-- Color contrast meets WCAG 2.1 AA (4.5:1 body text); inherited core colors already comply —
+- Color contrast meets WCAG 2.1 AA (4.5:1 body text); inherited core colors already comply -
   verify the muted 12px helper text against its background.
 - Decorative icons carry `aria-hidden="true"`; the sidebar toolbar button has an accessible label.
 - `prefers-reduced-motion`: the streaming caret pulse and any transitions are disabled under the

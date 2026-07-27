@@ -33,7 +33,7 @@ npm run build      # compile src/ into build/ (the sidebar does not load without
 ```
 
 Copy `.env.example` to `.env` for local development values. Set the provider endpoint in
-`wp-config.php` — it is a constant, never an admin setting (an admin-editable URL that receives the
+`wp-config.php` - it is a constant, never an admin setting (an admin-editable URL that receives the
 key would be an SSRF hazard):
 
 ```php
@@ -76,7 +76,7 @@ If you do not already have that library, provision it by hand:
 2. Copy `wp-tests-config-sample.php` to `wp-tests-config.php` in that directory and edit it:
    - `ABSPATH` points at a WordPress core checkout.
    - `DB_NAME` / `DB_USER` / `DB_PASSWORD` / `DB_HOST` point at a **disposable** MySQL/MariaDB
-     database — the suite drops and recreates its tables on every run, so never aim it at a database
+     database - the suite drops and recreates its tables on every run, so never aim it at a database
      you care about.
 3. Run `WP_TESTS_DIR=/path/to/that/dir composer run test`.
 

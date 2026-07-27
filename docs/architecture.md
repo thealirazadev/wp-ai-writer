@@ -6,7 +6,7 @@ A single WordPress plugin with three surfaces bootstrapped from one main file:
 
 1. Admin (settings + log): `AIWR_Settings` registers a Settings API options page (key, model,
    budget, prices) with a server-rendered usage panel; `AIWR_Log_Screen` renders the activity log
-   with `WP_List_Table`. Both are classic server-rendered admin screens gated on `manage_options` —
+   with `WP_List_Table`. Both are classic server-rendered admin screens gated on `manage_options` -
    no REST surface is exposed for them.
 2. Editor (sidebar app): a React sidebar registered with `registerPlugin` + `PluginSidebar`, built
    by `@wordpress/scripts` from `src/` into `build/`. It reads editor state (selected block, post
@@ -40,7 +40,7 @@ Sidebar action (Generate clicked)
 
 ### Streaming relay
 
-`wp_remote_post` buffers whole responses, so the streaming path uses a direct PHP cURL handle —
+`wp_remote_post` buffers whole responses, so the streaming path uses a direct PHP cURL handle -
 the one deliberate exception to the wp_remote_* rule, isolated inside `AIWR_Provider`:
 
 - Preconditions checked by `can_stream()`: `curl_init` exists, `headers_sent()` is false. If any
@@ -51,7 +51,7 @@ the one deliberate exception to the wp_remote_* rule, isolated inside `AIWR_Prov
   output buffers, then runs cURL with a `CURLOPT_WRITEFUNCTION` callback (connect timeout 15s,
   total timeout 120s).
 - The callback parses the provider's SSE frames and re-emits normalized events (`delta`, `done`,
-  `error` — see `docs/api-contracts.md`), calling `flush()` per chunk. Normalizing keeps the
+  `error` - see `docs/api-contracts.md`), calling `flush()` per chunk. Normalizing keeps the
   browser contract provider-independent and guarantees no provider headers or auth details leak.
 - The provider's terminal events carry token usage; the relay captures those figures while
   streaming and records the log row after the stream closes, then `exit`s (bypassing normal REST
@@ -144,7 +144,7 @@ wp-ai-writer/
   `@wordpress/editor` (its home since 6.6). Exact dependency versions are pinned at install time
   and both lockfiles are committed.
 - `@wordpress/scripts` build with plain JavaScript (JSX): the officially maintained toolchain, no
-  custom build pipeline. TypeScript is skipped deliberately — one small app, one REST endpoint, no
+  custom build pipeline. TypeScript is skipped deliberately - one small app, one REST endpoint, no
   complex data model; stock wp-scripts defaults keep the build boring. (The container's
   `wp-blocks-starter` uses TS because types document a block-attribute API; that rationale does not
   apply here.) The one deviation from "stock" is `webpack.config.js`, which re-exports the wp-scripts
@@ -155,10 +155,10 @@ wp-ai-writer/
   `SelectControl`, `Button`, `Notice`, `Spinner`): matches the editor's look, accessibility, and
   future compatibility for free.
 - No external PHP dependencies at runtime: `wp_remote_post` for non-streaming HTTP; direct cURL
-  only for the streaming relay (justified above). No provider SDK — the API surface used is one
+  only for the streaming relay (justified above). No provider SDK - the API surface used is one
   endpoint, and an SDK would both add a dependency and hardcode a vendor.
 - Custom table for the activity log (not a CPT): rows are append-only structured metadata queried
-  with aggregates — the budget check needs a fast monthly SUM and the log screen needs indexed
+  with aggregates - the budget check needs a fast monthly SUM and the log screen needs indexed
   pagination by date/user. Post meta and CPTs are the wrong shape for SUM/COUNT over ranges and
   would bloat `wp_posts`. The table ships via `dbDelta` with a versioned schema
   (`aiwr_db_version` option) and an upgrade routine; applied migrations are never edited.
@@ -181,7 +181,7 @@ wp-ai-writer/
 
 ### Option: `aiwr_usage` (array, autoload off)
 
-`{ month: 'YYYY-MM', input_tokens: int, output_tokens: int }` — O(1) budget check, updated after
+`{ month: 'YYYY-MM', input_tokens: int, output_tokens: int }` - O(1) budget check, updated after
 every request. Reset when the stored month differs from the current month. If missing or stale it
 is recomputed from the log table (the log is the source of truth; the option is a counter cache).
 
@@ -201,12 +201,12 @@ is recomputed from the log table (the log is the source of truth; the option is 
 | `duration_ms` | INT UNSIGNED | |
 | `created_at` | DATETIME, KEY | UTC |
 
-No prompt or response content is stored — metadata only. Rate-limit state lives in transient
+No prompt or response content is stored - metadata only. Rate-limit state lives in transient
 `aiwr_rl_{user_id}` (`{count, window_start}`, 60s fixed window, default 10 requests, filterable
 via `aiwr_requests_per_minute`).
 
 Relationships: one user has many log rows; one site has one settings option and one usage counter.
-Nothing references posts persistently — generated content becomes ordinary block/post data owned by
+Nothing references posts persistently - generated content becomes ordinary block/post data owned by
 WordPress once applied.
 
 ## Where state lives
@@ -214,10 +214,10 @@ WordPress once applied.
 - Server, options table: settings and the monthly usage counter.
 - Server, custom table: the activity log (source of truth for usage).
 - Server, transients: per-user rate-limit windows (ephemeral, cache-backed).
-- Client, editor data stores: post content, selection, title, excerpt — all owned by
+- Client, editor data stores: post content, selection, title, excerpt - all owned by
   `core/block-editor` / `core/editor`; the sidebar writes via their dispatch actions only.
 - Client, React component state: in-flight request status, streaming preview text, unconfirmed
-  results. Deliberately ephemeral — closing the sidebar discards unapplied results; nothing is
+  results. Deliberately ephemeral - closing the sidebar discards unapplied results; nothing is
   persisted client-side (no localStorage, no cookies).
 - Never stored anywhere: prompt/response bodies (beyond the in-memory request) and the API key on
   the client.
@@ -238,6 +238,6 @@ WordPress once applied.
   `overrides` in `package.json` rather than by moving off the toolchain: both are already on their
   latest release, and forcing the patched transitive version is the only way to reach it. Each
   override is dropped once the parent ships the fix itself.
-- Environment variables: none in production — configuration is entered on the settings page.
+- Environment variables: none in production - configuration is entered on the settings page.
   `.env.example` documents local-dev-only values (a dev provider key, a mock endpoint override, a
   model string) used when testing with `wp-env`; see that file.

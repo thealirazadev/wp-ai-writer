@@ -1,6 +1,6 @@
 # Launch Checklist: wp-ai-writer
 
-Skeleton — work through near the end, before calling the plugin releasable. Check items off only
+Skeleton - work through near the end, before calling the plugin releasable. Check items off only
 after verifying on a production-like host (not just wp-env).
 
 ## Configuration and secrets

@@ -6,7 +6,7 @@ A WordPress plugin that adds a writing assistant sidebar to the block editor. An
 sidebar and runs one of five actions: draft content from a prompt, rewrite the currently selected
 block with tone and length presets, generate an SEO title and meta description, summarize the post
 into an excerpt, or generate alt text for images in the post that are missing it. The plugin calls
-the LLM provider API exclusively server-side through its own REST proxy — the provider key lives in
+the LLM provider API exclusively server-side through its own REST proxy - the provider key lives in
 the options table and is never sent to the browser. Responses stream into the sidebar as they
 generate, with a graceful non-streaming fallback when the host blocks streaming. Nothing is ever
 written into the post silently: every result is previewed in the sidebar and applied only when the
@@ -45,8 +45,8 @@ usage and spend from the settings and log screens. The plugin assumes a normal s
 8. Alt text action. Scan the post for image blocks with empty alt text, generate a description per
    image using the provider's image input support, and apply it to the block's alt attribute on
    confirmation.
-9. Activity log. An append-only log of every request — user, action, model, input/output tokens,
-   cost estimate, status, duration — browsable by administrators with pagination.
+9. Activity log. An append-only log of every request - user, action, model, input/output tokens,
+   cost estimate, status, duration - browsable by administrators with pagination.
 
 ## Non-goals / out of scope
 
@@ -58,7 +58,7 @@ usage and spend from the settings and log screens. The plugin assumes a normal s
 - No front-end, visitor-facing features. Everything lives in wp-admin and the editor.
 - No SEO plugin integration in v1 (writing the meta description into Yoast/Rank Math meta keys is a
   backlog candidate). The meta description is delivered via copy button.
-- No storage of prompt or response bodies in the activity log — metadata only (privacy decision).
+- No storage of prompt or response bodies in the activity log - metadata only (privacy decision).
 - No classic editor support; the sidebar requires the block editor.
 - No multisite-specific UI; the plugin is configured and budgeted per site.
 - No client-side calls to the provider under any circumstances.
@@ -99,7 +99,7 @@ usage and spend from the settings and log screens. The plugin assumes a normal s
 - On a host that supports it, generated text visibly appears incrementally in the preview during
   generation (first text within a few seconds, before the response completes).
 - When streaming is unavailable (no cURL, buffering proxy) the same request completes with a JSON
-  response and the preview fills at once — same content, no user-visible error.
+  response and the preview fills at once - same content, no user-visible error.
 - A stream that fails before any text arrives is retried once automatically without streaming.
 
 ### 6. Rewrite selected block

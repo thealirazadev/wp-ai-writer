@@ -64,8 +64,8 @@ every non-obvious decision with its reason.
      cancels ran past the token budget. `ignore_user_abort( true )` now keeps the relay alive to
      settle its accounting.
   3. The monthly usage counter double counted. `add_usage()` called `get_current_usage()`, which
-     recomputes from the log when the counter is missing or stale — a log that already contained
-     the row just written — and then added the same tokens again. Measured end to end: a request
+     recomputes from the log when the counter is missing or stale - a log that already contained
+     the row just written - and then added the same tokens again. Measured end to end: a request
      the provider reported as 120/60 was recorded as 240/120.
   Also fixed two tests that had never run and could not pass: the non-image attachment fixture used
   `wp_tempnam()` (a `.tmp` name that `wp_upload_bits()` refuses, so no attachment was created and
@@ -106,10 +106,10 @@ every non-obvious decision with its reason.
   private reporting), `.github/PULL_REQUEST_TEMPLATE.md` (checklist tied to phpcs/phpunit/jest/build),
   `.editorconfig` (tabs for PHP/JS/SCSS, 2-space for YAML/JSON, no trailing-whitespace trim for md/pot),
   and `CHANGELOG.md` (Keep a Changelog; 0.1.0 left dateless since nothing is tagged yet). Tier 2
-  (accessibility + coverage): (1) settings-field label associations — every `add_settings_field` now
+  (accessibility + coverage): (1) settings-field label associations - every `add_settings_field` now
   passes `label_for` and each input carries the matching `id` plus `aria-describedby` to its
   description; new `tests/test-settings.php` asserts the wiring via `$wp_settings_fields`. (2) Sidebar
-  accessible names — the per-image alt-text Generate/Apply buttons get distinct `aria-label`s built
+  accessible names - the per-image alt-text Generate/Apply buttons get distinct `aria-label`s built
   from the image file name (pure `imageLabel()` moved into `utils/blocks.js` and Jest-tested), and the
   streaming preview is exposed as a labelled `role="region"`. (3) New thin-path tests: JS stream abort
   after the first delta must NOT retry (guards against duplicate content) for both the read-error and
@@ -118,8 +118,8 @@ every non-obvious decision with its reason.
   deleted, skips when none were). Translation template regenerated (135 -> 138 strings) for the three
   new a11y strings. Gate after every commit stayed green: phpcs, ESLint, `php -l`, build, Jest
   23 -> 28, PHPUnit 58 -> 64 (203 assertions). No new dependencies. Full-render React a11y tests were
-  not feasible — `@wordpress/components` and the testing-library packages are not installed and adding
-  them was out of scope — so a11y JS is verified through extracted pure helpers.
+  not feasible - `@wordpress/components` and the testing-library packages are not installed and adding
+  them was out of scope - so a11y JS is verified through extracted pure helpers.
 
 - Phase 7 complete (tone and style presets, a v2 feature). One tone-preset registry is the source
   of truth: `AIWR_Prompts::tones()` maps each allowed key to its prompt fragment, with
@@ -170,7 +170,7 @@ every non-obvious decision with its reason.
 - ENVIRONMENT FALLBACK (wp-env blocked): the host has Docker (server 29.1.3) but no `docker compose`
   v2 plugin and no `docker-compose` v1, and no MySQL/MariaDB server or client. `npx wp-env start`
   fails with "unknown shorthand flag: 'f'" because wp-env shells out to a compose command that does
-  not exist. This is not a transient failure — the compose plugin is simply not installed and cannot
+  not exist. This is not a transient failure - the compose plugin is simply not installed and cannot
   be added here. Per the build brief, verification falls back to static: `composer run lint` (phpcs,
   WordPress-Extra + Docs), `php -l` on every file, plus the full JS chain (`npm run build`,
   `npm run lint:js`, `npm run test:unit`). The PHPUnit suite is written to the WP test-suite contract
@@ -207,7 +207,7 @@ every non-obvious decision with its reason.
   suite provisioned by hand (extract wordpress-develop's `tests/phpunit/includes` + `data`, copy
   `wp-tests-config-sample.php` to `wp-tests-config.php`, set ABSPATH to a WordPress core checkout,
   and aim DB_HOST at any MySQL/MariaDB). Verified against WP 6.8.2 with PHPUnit 9.6. Run it before
-  touching REST, limits, or log code — the suite caught real defects the static gate cannot.
+  touching REST, limits, or log code - the suite caught real defects the static gate cannot.
 - `AIWR_Limits::add_usage( $in, $out )` became `AIWR_Limits::refresh_usage()`. The counter is now
   recomputed from the activity log (already documented as the source of truth) after each request
   rather than incremented. This removes the double count when the counter is missing or stale, and
@@ -221,7 +221,7 @@ every non-obvious decision with its reason.
   changing the toolchain. `@wordpress/scripts` (33.0.0) and `@wordpress/env` (11.11.0) are both
   already the latest release, so every vulnerable package sits below a parent that has not yet
   shipped the fix. `npm audit fix --force` proposed downgrading `@wordpress/scripts` from 33.0.0 to
-  19.2.4 and `@wordpress/env` from 11.11.0 to 11.8.0; that was rejected outright — reverting the
+  19.2.4 and `@wordpress/env` from 11.11.0 to 11.8.0; that was rejected outright - reverting the
   build toolchain by fourteen majors to silence dev-only advisories trades a real problem for a
   bigger one. Overrides in place: `adm-zip` 0.6.0, `lighthouse` 13.4.1, `linkify-it` 5.0.2,
   `markdown-it` 14.2.0, `minimatch@<3.1.4` -> 3.1.4, `serialize-javascript` 7.0.5, `uuid` 11.1.1,
@@ -229,13 +229,13 @@ every non-obvious decision with its reason.
   `minimatch@<3.1.4` selector form matters: a bare `minimatch` override would have dragged the
   healthy 9.x and 10.x copies elsewhere in the tree down to a 3.x release, so the selector confines
   the change to the single vulnerable node under `markdownlint-cli`.
-- `ARCHITECTURE CHANGED` — "zero custom webpack" no longer holds. webpack-dev-server 5 validates
+- `ARCHITECTURE CHANGED` - "zero custom webpack" no longer holds. webpack-dev-server 5 validates
   `devServer.proxy` as an array and rejects the object form that wp-scripts 33 still emits, so
   pinning 5.2.6 made `wp-scripts start --hot` die at schema validation ("options.proxy should be an
   array") while `build` and `start` without `--hot` were unaffected, because those never construct a
-  dev server. Rather than leave six webpack-dev-server advisories open — they are the ones that
+  dev server. Rather than leave six webpack-dev-server advisories open - they are the ones that
   actually target a developer's machine, exposing project source to any malicious page visited while
-  the dev server runs — the repo now has a root `webpack.config.js` that re-exports the stock
+  the dev server runs - the repo now has a root `webpack.config.js` that re-exports the stock
   wp-scripts config with the proxy normalised. It reproduces exactly what v4 did internally, so
   behaviour is unchanged. `docs/architecture.md` was updated to match. Delete the file once
   wp-scripts ships a v5-compatible devServer.

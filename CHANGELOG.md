@@ -46,8 +46,8 @@ tagged.
   call, plus a current-month usage panel on the settings page.
 - Settings page: write-only masked API key, model identifier, monthly token
   budget, optional per-million-token prices, and a log-retention window.
-- Activity log (Tools → AI Writer Log): one metadata-only row per request — user,
-  action, model, tokens, cost estimate, status, duration — paginated for
+- Activity log (Tools → AI Writer Log): one metadata-only row per request - user,
+  action, model, tokens, cost estimate, status, duration - paginated for
   administrators. No prompt or response content is stored.
 - Log retention with a daily WP-Cron prune, applying generated alt text back to
   the attachment's `_wp_attachment_image_alt` meta, and persisting an applied SEO

@@ -12,7 +12,7 @@ posture and cost guardrails land in Phase 1; streaming with graceful fallback la
 ## Phase 1: Foundation, settings, and the secured proxy (non-streaming)
 
 Goal: an activatable plugin where an admin configures key/model/budget, an editor-capable user can
-hit `POST /aiwr/v1/generate` for the draft action (via curl or the browser console — no UI yet),
+hit `POST /aiwr/v1/generate` for the draft action (via curl or the browser console - no UI yet),
 and every request is capability-checked, rate-limited, budget-enforced, and logged.
 
 ### Definition of done
@@ -64,8 +64,8 @@ and every request is capability-checked, rate-limited, budget-enforced, and logg
 
 ## Phase 2: Sidebar, draft action, and streaming with fallback
 
-Goal: the editor sidebar exists with the draft action end to end — prompt in, text streaming into
-a preview, blocks inserted only on confirmation — degrading cleanly to non-streaming.
+Goal: the editor sidebar exists with the draft action end to end - prompt in, text streaming into
+a preview, blocks inserted only on confirmation - degrading cleanly to non-streaming.
 
 ### Definition of done
 
@@ -184,8 +184,8 @@ Goal: the admin-facing log, translation readiness, uninstall cleanup, and a fina
 
 ### Definition of done
 
-- Tools > AI Writer Log: `WP_List_Table` over the log table — date, user, action, model, tokens,
-  cost, status — 20 rows per page, newest first, `manage_options` only. No prompt/response content
+- Tools > AI Writer Log: `WP_List_Table` over the log table - date, user, action, model, tokens,
+  cost, status - 20 rows per page, newest first, `manage_options` only. No prompt/response content
   displayed (none is stored).
 - `uninstall.php` drops the log table and deletes `aiwr_settings`, `aiwr_usage`,
   `aiwr_db_version`, and `aiwr_rl_*` transients.
@@ -211,13 +211,13 @@ Goal: the admin-facing log, translation readiness, uninstall cleanup, and a fina
 
 ---
 
-## Phase 6: Deferred enhancements — retention, attachment alt meta, and SEO meta integration
+## Phase 6: Deferred enhancements - retention, attachment alt meta, and SEO meta integration
 
 Goal: ship three items promoted from the backlog. Administrators can bound how long activity-log
 rows live (with an automatic daily prune); applying generated alt text also writes the attachment's
 `_wp_attachment_image_alt` meta; and an applied SEO meta description is persisted to a post meta key
 that SEO plugins can consume through a documented filter and action. Each write reuses the
-capability checks already enforced and stays inside the "preview then confirm" rule — nothing is
+capability checks already enforced and stays inside the "preview then confirm" rule - nothing is
 written until the editor clicks Apply.
 
 ### Definition of done
@@ -328,14 +328,14 @@ endpoint, or its capability and nonce checks changes.
 - Unhappy paths:
   - Wrong input: out-of-enum action/tone/length, oversized prompt/content, non-numeric IDs.
   - Empty forms: empty prompt, empty post for seo/excerpt, post with no images.
-  - No network: provider unreachable — friendly 502/504, correct log row, sidebar recovers.
-  - Duplicate submissions: double-click Generate — button disabled in flight; exactly one request
+  - No network: provider unreachable - friendly 502/504, correct log row, sidebar recovers.
+  - Duplicate submissions: double-click Generate - button disabled in flight; exactly one request
     and one log row.
-  - Refresh mid-action: reload the editor during a stream — no orphaned state, log row closed as
+  - Refresh mid-action: reload the editor during a stream - no orphaned state, log row closed as
     `aborted`, next request works.
 - Empty states: unconfigured plugin (sidebar notice), no usage yet (settings panel), empty log
   screen, all-images-have-alt.
-- Long inputs: 2000-char prompt, very long post content (truncation applies), long model string —
+- Long inputs: 2000-char prompt, very long post content (truncation applies), long model string -
   no layout break, no truncated DB writes.
 
 ## Backlog

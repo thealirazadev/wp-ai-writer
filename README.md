@@ -120,12 +120,12 @@ a browser client are unavailable.
 **The provider endpoint is a `wp-config.php` constant, not a setting.** `AIWR_PROVIDER_ENDPOINT`
 defaults to a reserved example host, so a fresh install sends nothing anywhere until it is
 configured. An endpoint field on the settings page would have been friendlier, but it would let
-anyone who reaches that screen redirect the stored key to a host of their choosing — server-side
+anyone who reaches that screen redirect the stored key to a host of their choosing - server-side
 request forgery with the credential already attached. The cost is that pointing at a mock server
 during development means editing `wp-config.php` instead of a form field.
 
-**One provider client, no abstraction layer.** Everything provider-specific — endpoint, auth header,
-body shape, response and SSE parsing — lives in `class-aiwr-provider.php` and nowhere else. A
+**One provider client, no abstraction layer.** Everything provider-specific - endpoint, auth header,
+body shape, response and SSE parsing - lives in `class-aiwr-provider.php` and nowhere else. A
 provider-agnostic driver interface was rejected under the rule of three: there is no second provider
 yet, and plumbing for an imagined one is surface area that has to be maintained and tested. A vendor
 SDK was rejected too, since the API surface used is a single endpoint and an SDK would add a runtime
@@ -134,7 +134,7 @@ then, against two real shapes rather than one guessed one.
 
 **Streaming through a server-side relay, with a non-streaming fallback.** `wp_remote_post` buffers
 whole responses and cannot relay server-sent events, so the streaming path uses a direct cURL handle
-inside the provider class — the single sanctioned exception to the `wp_remote_*` rule, deliberately
+inside the provider class - the single sanctioned exception to the `wp_remote_*` rule, deliberately
 confined to one file. The relay parses the provider's frames and re-emits normalized
 `delta` / `done` / `error` events, so the browser contract stays provider-independent and no provider
 headers or auth details can leak. Streaming from the provider straight to the browser was rejected
@@ -144,7 +144,7 @@ sent, the same request is answered as ordinary JSON; the client branches on `Con
 retries once without streaming if a stream fails before the first delta.
 
 **The activity log stores metadata only.** One row per request holding user, action, model, token
-counts, cost estimate, status and duration — never prompt or response text. Logging bodies would
+counts, cost estimate, status and duration - never prompt or response text. Logging bodies would
 make debugging a bad generation much easier, but the log would accumulate draft content and become a
 disclosure risk on any site with more than one editor. Privacy won; debugging a bad generation means
 reproducing it rather than reading it back.

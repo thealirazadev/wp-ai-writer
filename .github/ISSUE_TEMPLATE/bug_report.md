@@ -49,7 +49,7 @@ shown in the sidebar, and any relevant entry from the activity log
 ## Logs
 
 If `WP_DEBUG` is enabled, paste any `aiwr` lines from the PHP error log. Redact
-anything sensitive first — never include the provider API key.
+anything sensitive first - never include the provider API key.
 
 ## Additional context
 

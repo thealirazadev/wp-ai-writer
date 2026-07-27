@@ -24,7 +24,7 @@ touched only in manual QA with the dev key.
 
 - `POST /aiwr/v1/generate` through `rest_do_request`: 401/403 matrix (logged out, subscriber,
   bad nonce), 409 unconfigured, 400 invalid input per action, 429 rate limited, 403 budget
-  exhausted, 200 happy path per action with mocked provider — asserting response shape, log row,
+  exhausted, 200 happy path per action with mocked provider - asserting response shape, log row,
   and usage counter side effects.
 - `alt_text` attachment validation: missing file, wrong mime, oversize -> 422, no budget change.
 - Uninstall routine removes table, options, transients.
@@ -42,7 +42,7 @@ touched only in manual QA with the dev key.
   editor insertion/undo behavior, accessibility passes (keyboard-only run, screen reader
   announcements), and one live-provider smoke test per provider-touching phase.
 
-Not covered in v1: browser e2e automation (Playwright) — manual QA covers the editor flows; add
+Not covered in v1: browser e2e automation (Playwright) - manual QA covers the editor flows; add
 e2e only if regressions justify it.
 
 ## Commands

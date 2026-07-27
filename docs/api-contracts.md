@@ -1,7 +1,7 @@
 # API Contracts: wp-ai-writer
 
 REST namespace: `aiwr/v1` under `/wp-json/`. This contract is agreed before any frontend or
-backend code is written. The plugin exposes exactly one application route — settings, usage, and
+backend code is written. The plugin exposes exactly one application route - settings, usage, and
 the activity log are server-rendered admin screens (`manage_options`), not REST endpoints, and the
 provider API key appears in no response of any kind.
 
@@ -10,8 +10,8 @@ provider API key appears in no response of any kind.
 - Standard WordPress cookie authentication plus the `X-WP-Nonce` header carrying a `wp_rest`
   nonce. Core REST verifies the nonce; the streaming client sends the same header on its raw
   `fetch` calls.
-- Permission callback for `POST /aiwr/v1/generate`: user is logged in, has `edit_posts`, and — when
-  `post_id` is present — `edit_post` for that post. Failures return core's `rest_forbidden` /
+- Permission callback for `POST /aiwr/v1/generate`: user is logged in, has `edit_posts`, and - when
+  `post_id` is present - `edit_post` for that post. Failures return core's `rest_forbidden` /
   `rest_cookie_invalid_nonce` errors (401/403).
 
 ## POST /aiwr/v1/generate
@@ -31,7 +31,7 @@ One route, five actions. Request body (`application/json`):
 | Field | Rules |
 | --- | --- |
 | `action` | Required. One of `draft`, `rewrite`, `seo`, `excerpt`, `alt_text`. |
-| `stream` | Optional bool, default `false`. Honored for `draft`, `rewrite`, `excerpt`. Ignored for `seo` and `alt_text` (short structured outputs — always JSON). |
+| `stream` | Optional bool, default `false`. Honored for `draft`, `rewrite`, `excerpt`. Ignored for `seo` and `alt_text` (short structured outputs - always JSON). |
 | `post_id` | Optional int. When present, must be a post the user can edit. Used for logging context and the `edit_post` check. |
 | `input` | Required object; shape depends on `action` (below). |
 | `options` | Optional object; only `rewrite` reads it. |
@@ -41,11 +41,11 @@ is truncated server-side, other violations are rejected):
 
 | Action | `input` | `options` | Result payload |
 | --- | --- | --- | --- |
-| `draft` | `{"prompt": string}` 1-2000 chars | — | `{"html": string}` sanitized via `wp_kses_post` |
+| `draft` | `{"prompt": string}` 1-2000 chars | - | `{"html": string}` sanitized via `wp_kses_post` |
 | `rewrite` | `{"text": string}` 1-8000 chars | `{"tone": "professional"\|"friendly"\|"casual"\|"confident", "length": "shorter"\|"same"\|"longer"}` | `{"html": string}` |
-| `seo` | `{"title": string 0-300, "content": string 1-20000}` | — | `{"seo_title": string <=60, "meta_description": string <=160}` |
-| `excerpt` | `{"content": string 1-20000}` | — | `{"excerpt": string}` |
-| `alt_text` | `{"attachment_id": int > 0}` | — | `{"alt_text": string <=150}` |
+| `seo` | `{"title": string 0-300, "content": string 1-20000}` | - | `{"seo_title": string <=60, "meta_description": string <=160}` |
+| `excerpt` | `{"content": string 1-20000}` | - | `{"excerpt": string}` |
+| `alt_text` | `{"attachment_id": int > 0}` | - | `{"alt_text": string <=150}` |
 
 ### Non-streaming response (200, `application/json`)
 
@@ -103,7 +103,7 @@ data: {"code": "aiwr_provider_error", "message": "The writing service returned a
 
 ## Error response format
 
-Every pre-stream error uses the standard WordPress REST envelope, produced from `WP_Error` — this
+Every pre-stream error uses the standard WordPress REST envelope, produced from `WP_Error` - this
 is the single error format for the whole plugin:
 
 ```json
@@ -134,7 +134,7 @@ failures reuse the identical object as the `data` of an SSE `error` event.
 Not a public API, documented so the client class has one agreed shape: `AIWR_Provider` POSTs JSON
 to the configured endpoint (`AIWR_PROVIDER_ENDPOINT`, overridable in `wp-config.php`) with the
 stored key in the provider's documented auth header, a body of
-`{model, max_tokens, messages: [...], stream}`, and — for `alt_text` — a base64 image content
+`{model, max_tokens, messages: [...], stream}`, and - for `alt_text` - a base64 image content
 block in the user message. Timeouts: 60s non-streaming, 15s connect / 120s total streaming. The
 provider's terminal stream events report token usage, which the relay records. Everything
 provider-specific (paths, header names, event names, payload keys) is confined to
