@@ -260,6 +260,59 @@ written until the editor clicks Apply.
 
 ---
 
+## Phase 7: Tone and style presets
+
+Goal: give editors a small set of built-in tone presets they can pick in the sidebar for the draft
+and rewrite actions, injected into the server-side prompt, with an optional site default tone. The
+tone is validated against an allowlist on the one REST route; nothing about the route, its single
+endpoint, or its capability and nonce checks changes.
+
+### Definition of done
+
+- A single tone-preset registry is the source of truth: `AIWR_Prompts::tones()` maps each allowed
+  tone key to the prompt fragment it injects, with `AIWR_Prompts::tone_keys()`,
+  `AIWR_Prompts::is_valid_tone()`, and `AIWR_Prompts::default_tone()` derived from it. The preset
+  keys are `professional`, `friendly`, `concise`, `persuasive`, `casual`, and `confident`. The
+  rewrite action's tone list is folded into this registry rather than kept as a second copy, so
+  every previously accepted rewrite tone stays valid.
+- The draft prompt applies the chosen tone: `AIWR_Prompts::build( 'draft', $input, $options )`
+  injects the tone fragment, defaulting to `professional` when none is given.
+- `POST /aiwr/v1/generate` validates `options.tone` against the allowlist for both draft and
+  rewrite. A supplied tone outside the allowlist returns `aiwr_invalid_input` (400) naming the
+  field; an omitted tone resolves to the site default tone (which is itself always a valid key).
+- Settings gains a "Default tone" select over the same registry that saves and validates like the
+  other fields; an invalid submitted value is rejected with the admin notice and the old value
+  kept.
+- The sidebar exposes a tone selector: the draft panel gains one (defaulting to the localized site
+  default) and the rewrite panel keeps its existing one, both drawing from one shared JS tone list.
+- Everything stays server side and safe: the tone is never trusted from the client beyond the
+  allowlist check, and the provider stays mocked in every test (`pre_http_request` for PHP, stubbed
+  `fetch` for JS) referring only to the neutral "LLM provider API".
+
+### Manual test checklist
+
+- Open the draft panel: a Tone select shows the presets and defaults to the site default. Generate
+  with tone "persuasive" and with "concise": the two drafts read differently.
+- Rewrite panel: the Tone select now lists all six presets; a rewrite with "casual" still works.
+- Settings > AI Writer: set Default tone to "friendly", save, reload: the value persists and the
+  draft panel now defaults to Friendly. Force an out-of-allowlist value via the form: error notice,
+  old value kept.
+- Console POST with `options.tone` set to a bogus value: 400 `aiwr_invalid_input`. Omit the tone:
+  the request succeeds and the outgoing prompt carries the site default tone fragment.
+
+### Commits
+
+- `docs: add tone presets phase to phases.md`
+- `feat: add shared tone preset registry to the prompt builder`
+- `feat: apply the selected tone to the draft prompt`
+- `feat: validate the tone against the allowlist on the generate route`
+- `feat: add a site default tone setting to the settings page`
+- `feat: add a shared tone module and a draft tone selector`
+- `chore: regenerate the translation template for the tone strings`
+- `docs: record the tone presets feature in the readme and memory`
+
+---
+
 ## Phase verification (run at the end of every phase)
 
 - Run the app: `npm run build`, start `wp-env`, activate the plugin; exercise the phase's features
