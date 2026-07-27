@@ -30,6 +30,62 @@ class AIWR_Test_Prompts extends WP_UnitTestCase {
 		$this->assertSame( 1500, $built['max_tokens'] );
 	}
 
+	public function test_tone_registry_is_an_allowlist() {
+		$keys = AIWR_Prompts::tone_keys();
+
+		foreach ( array( 'professional', 'friendly', 'concise', 'persuasive', 'casual', 'confident' ) as $expected ) {
+			$this->assertContains( $expected, $keys );
+			$this->assertTrue( AIWR_Prompts::is_valid_tone( $expected ) );
+		}
+
+		$this->assertFalse( AIWR_Prompts::is_valid_tone( 'zany' ) );
+		$this->assertFalse( AIWR_Prompts::is_valid_tone( '' ) );
+		$this->assertSame( 'professional', AIWR_Prompts::default_tone() );
+		$this->assertTrue( AIWR_Prompts::is_valid_tone( AIWR_Prompts::default_tone() ) );
+	}
+
+	public function test_draft_applies_the_selected_tone() {
+		$built = AIWR_Prompts::build(
+			'draft',
+			array( 'prompt' => 'compost guide' ),
+			array( 'tone' => 'persuasive' )
+		);
+
+		$content = $this->user_content( $built );
+		$this->assertStringContainsString( 'compost guide', $content );
+		$this->assertStringContainsString( 'persuasive', $content );
+	}
+
+	public function test_draft_defaults_to_the_professional_tone() {
+		$built = AIWR_Prompts::build( 'draft', array( 'prompt' => 'compost guide' ) );
+
+		$this->assertStringContainsString( 'professional', $this->user_content( $built ) );
+	}
+
+	public function test_draft_differs_by_tone() {
+		$friendly = $this->user_content(
+			AIWR_Prompts::build( 'draft', array( 'prompt' => 'x' ), array( 'tone' => 'friendly' ) )
+		);
+		$concise  = $this->user_content(
+			AIWR_Prompts::build( 'draft', array( 'prompt' => 'x' ), array( 'tone' => 'concise' ) )
+		);
+
+		$this->assertNotSame( $friendly, $concise );
+	}
+
+	public function test_rewrite_accepts_registry_tones() {
+		$built = AIWR_Prompts::build(
+			'rewrite',
+			array( 'text' => 'Original text.' ),
+			array(
+				'tone'   => 'persuasive',
+				'length' => 'same',
+			)
+		);
+
+		$this->assertStringContainsString( 'persuasive', $this->user_content( $built ) );
+	}
+
 	public function test_rewrite_reflects_tone_and_length() {
 		$casual = AIWR_Prompts::build(
 			'rewrite',
