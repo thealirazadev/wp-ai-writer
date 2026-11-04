@@ -312,6 +312,38 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'test-secret-key-1234', wp_json_encode( $response->get_data() ) );
 	}
 
+	public function test_provider_request_does_not_follow_redirects() {
+		$captured = null;
+
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args ) use ( &$captured ) {
+				$captured = $args;
+
+				return array(
+					'response' => array( 'code' => 200 ),
+					'headers'  => array(),
+					'body'     => wp_json_encode(
+						array(
+							'content' => '<p>Drafted.</p>',
+							'usage'   => array(
+								'input_tokens'  => 10,
+								'output_tokens' => 5,
+							),
+						)
+					),
+				);
+			},
+			10,
+			3
+		);
+
+		$this->dispatch_draft( $this->editor_id() );
+
+		$this->assertIsArray( $captured );
+		$this->assertSame( 0, $captured['redirection'] );
+	}
+
 	public function test_budget_exhausted_blocks_the_provider() {
 		update_option(
 			AIWR_Settings::OPTION,

@@ -36,9 +36,13 @@ class AIWR_Provider {
 		$response = wp_remote_post(
 			AIWR_PROVIDER_ENDPOINT,
 			array(
-				'headers' => self::headers( $settings['api_key'] ),
-				'body'    => wp_json_encode( self::build_body( $payload, false ) ),
-				'timeout' => self::REQUEST_TIMEOUT,
+				'headers'     => self::headers( $settings['api_key'] ),
+				'body'        => wp_json_encode( self::build_body( $payload, false ) ),
+				'timeout'     => self::REQUEST_TIMEOUT,
+				// Never follow redirects: the HTTP layer would replay the Authorization header and
+				// the prompt body to whatever host the Location header names. The streaming path
+				// does not follow them either.
+				'redirection' => 0,
 			)
 		);
 
