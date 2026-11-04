@@ -26,6 +26,15 @@ tagged.
 
 - Wired label associations (`label_for`) and `aria-describedby` on the settings
   fields, so each control has a programmatically associated label and description.
+- The non-streaming provider request no longer follows redirects, which would have
+  replayed the API key and prompt to the redirect target.
+- Uninstall now cleans up every site on a multisite network, not only the current one.
+- The editor client uses core's live REST nonce and refreshes an expired one once,
+  so a tab left open for a day keeps working.
+- A provider 429 (rate limit or exhausted quota) is reported as
+  `aiwr_provider_rate_limited` with its own message instead of the generic error.
+- The API contract now documents the draft tone option, all six tone presets, and
+  the `apply_alt_text` / `apply_seo_meta` actions.
 
 ## [0.1.0] - Initial development version
 
