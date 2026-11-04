@@ -284,6 +284,48 @@ class AIWR_Test_Log extends WP_UnitTestCase {
 		AIWR_Migrations::maybe_upgrade();
 	}
 
+	/**
+	 * Uninstall removes the table and options of every site in the network.
+	 *
+	 * @group ms-required
+	 */
+	public function test_uninstall_cleans_every_site_on_multisite() {
+		global $wpdb;
+
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Multisite only.' );
+		}
+
+		$site_id = self::factory()->blog->create();
+
+		// Create the subsite table for real: under the test case's TEMPORARY rewrite the uninstall
+		// drop would hit the temporary copy and SHOW TABLES would never list it anyway.
+		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+
+		switch_to_blog( $site_id );
+		AIWR_Migrations::maybe_upgrade();
+		update_option( 'aiwr_settings', array( 'api_key' => 'secret' ) );
+		$site_table = AIWR_Log::table();
+		restore_current_blog();
+
+		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			define( 'WP_UNINSTALL_PLUGIN', 'wp-ai-writer/wp-ai-writer.php' );
+		}
+
+		require dirname( __DIR__ ) . '/uninstall.php';
+
+		switch_to_blog( $site_id );
+		$this->assertFalse( get_option( 'aiwr_settings' ) );
+		$this->assertFalse( get_option( AIWR_Migrations::VERSION_OPTION ) );
+		restore_current_blog();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $site_table ) ) );
+
+		AIWR_Migrations::maybe_upgrade();
+	}
+
 	private function count_rows() {
 		global $wpdb;
 		$table = AIWR_Log::table();
