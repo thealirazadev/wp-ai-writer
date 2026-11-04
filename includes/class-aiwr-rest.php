@@ -540,7 +540,7 @@ class AIWR_Rest {
 	 *
 	 * Runs the same object-level capability check as generation: the attachment ID comes from the
 	 * request body, so edit_posts alone is not enough. No provider call, budget, or log row is
-	 * involved — this only stores the text the editor already previewed and chose to apply.
+	 * involved; this only stores the text the editor already previewed and chose to apply.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
