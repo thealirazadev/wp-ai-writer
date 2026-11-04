@@ -136,6 +136,7 @@ is the single error format for the whole plugin:
 | `aiwr_image_unreadable` | 422 | `alt_text` attachment missing, unsupported type, or over 5 MB |
 | `aiwr_provider_error` | 502 | Provider returned an error; detail logged server-side, generic user message |
 | `aiwr_provider_timeout` | 504 | Provider did not respond within the timeout |
+| `aiwr_provider_rate_limited` | 429 | Provider answered 429 (rate limit or exhausted quota); generic message, detail logged |
 
 Rules: user-facing `message` strings are friendly, translated, and never contain provider response
 bodies, stack traces, or the key. Full provider detail goes to `aiwr_log()` only. Mid-stream

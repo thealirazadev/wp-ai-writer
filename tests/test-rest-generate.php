@@ -391,6 +391,31 @@ class AIWR_Test_Rest_Generate extends WP_UnitTestCase {
 		$this->assertSame( 1, $this->log_row_count( 'provider_error' ) );
 	}
 
+	public function test_provider_quota_error_maps_to_429_and_logs() {
+		add_filter(
+			'pre_http_request',
+			function () {
+				$this->provider_called = true;
+
+				return array(
+					'response' => array( 'code' => 429 ),
+					'headers'  => array(),
+					'body'     => '{"error":"quota exceeded"}',
+				);
+			},
+			10,
+			3
+		);
+
+		$response = $this->dispatch_draft( $this->editor_id() );
+		$data     = $response->get_data();
+
+		$this->assertSame( 429, $response->get_status() );
+		$this->assertSame( 'aiwr_provider_rate_limited', $data['code'] );
+		$this->assertStringNotContainsString( 'quota exceeded', $data['message'] );
+		$this->assertSame( 1, $this->log_row_count( 'provider_error' ) );
+	}
+
 	public function test_rewrite_returns_html() {
 		$this->mock_provider_content( '<p>Rewritten paragraph.</p>' );
 

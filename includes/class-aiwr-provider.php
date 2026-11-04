@@ -61,7 +61,7 @@ class AIWR_Provider {
 					'body'   => self::snippet( $body ),
 				)
 			);
-			return self::provider_error();
+			return self::error_for_status( $status );
 		}
 
 		$data = json_decode( $body, true );
@@ -169,6 +169,28 @@ class AIWR_Provider {
 				'aiwr_provider_timeout',
 				__( 'The writing service took too long to respond. Please try again.', 'wp-ai-writer' ),
 				array( 'status' => 504 )
+			);
+		}
+
+		return self::provider_error();
+	}
+
+	/**
+	 * Map a non-2xx provider status to a user-safe error.
+	 *
+	 * A 429 means the provider is rate limiting the site or its quota is used up. Retrying at once
+	 * will not help, so it gets its own code and message instead of the generic "try again" error.
+	 * Every other status maps to the generic provider error.
+	 *
+	 * @param int $status Provider HTTP status code.
+	 * @return WP_Error Mapped error.
+	 */
+	private static function error_for_status( $status ) {
+		if ( 429 === (int) $status ) {
+			return new WP_Error(
+				'aiwr_provider_rate_limited',
+				__( 'The writing service is rate limiting this site or its usage quota has been reached. Wait a few minutes and try again, or ask an administrator to check the provider account.', 'wp-ai-writer' ),
+				array( 'status' => 429 )
 			);
 		}
 
@@ -296,7 +318,7 @@ class AIWR_Provider {
 					'done'   => $state['done'],
 				)
 			);
-			return self::provider_error();
+			return ( $status < 200 || $status >= 300 ) ? self::error_for_status( $status ) : self::provider_error();
 		}
 
 		return array( 'usage' => $state['usage'] );

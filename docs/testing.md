@@ -13,8 +13,9 @@ touched only in manual QA with the dev key.
 - `AIWR_Limits`: rate-limit window counts, resets after 60s, is per-user; budget check against the
   usage counter; counter update math; month rollover and recompute-from-log path.
 - `AIWR_Provider::request()`: maps timeouts, non-2xx, and malformed JSON to the correct
-  `WP_Error` codes (`aiwr_provider_error`, `aiwr_provider_timeout`); never returns raw provider
-  bodies. `can_stream()` condition branches.
+  `WP_Error` codes (`aiwr_provider_error`, `aiwr_provider_timeout`, and
+  `aiwr_provider_rate_limited` for a provider 429); never returns raw provider bodies.
+  `can_stream()` condition branches.
 - `AIWR_Log`: row insert shape, prepared queries, monthly SUM query, migration creates the table
   and sets `aiwr_db_version`.
 - Settings sanitization: masked-key resubmit keeps the key, blank clears it, invalid budget/prices
