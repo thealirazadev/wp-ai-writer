@@ -16,7 +16,7 @@ provider API key appears in no response of any kind.
 
 ## POST /aiwr/v1/generate
 
-One route, five actions. Request body (`application/json`):
+One route, five generation actions plus two confirmed-apply actions. Request body (`application/json`):
 
 ```json
 {
@@ -30,22 +30,34 @@ One route, five actions. Request body (`application/json`):
 
 | Field | Rules |
 | --- | --- |
-| `action` | Required. One of `draft`, `rewrite`, `seo`, `excerpt`, `alt_text`. |
+| `action` | Required. One of `draft`, `rewrite`, `seo`, `excerpt`, `alt_text`, or the confirmed applies `apply_alt_text` and `apply_seo_meta`. |
 | `stream` | Optional bool, default `false`. Honored for `draft`, `rewrite`, `excerpt`. Ignored for `seo` and `alt_text` (short structured outputs - always JSON). |
 | `post_id` | Optional int. When present, must be a post the user can edit. Used for logging context and the `edit_post` check. |
 | `input` | Required object; shape depends on `action` (below). |
-| `options` | Optional object; only `rewrite` reads it. |
+| `options` | Optional object; only `draft` and `rewrite` read it. |
 
 Per-action `input` (all length caps enforced server-side; content over the cap for `seo`/`excerpt`
 is truncated server-side, other violations are rejected):
 
 | Action | `input` | `options` | Result payload |
 | --- | --- | --- | --- |
-| `draft` | `{"prompt": string}` 1-2000 chars | - | `{"html": string}` sanitized via `wp_kses_post` |
-| `rewrite` | `{"text": string}` 1-8000 chars | `{"tone": "professional"\|"friendly"\|"casual"\|"confident", "length": "shorter"\|"same"\|"longer"}` | `{"html": string}` |
+| `draft` | `{"prompt": string}` 1-2000 chars | `{"tone": <tone>}` | `{"html": string}` sanitized via `wp_kses_post` |
+| `rewrite` | `{"text": string}` 1-8000 chars | `{"tone": <tone>, "length": "shorter"\|"same"\|"longer"}` | `{"html": string}` |
 | `seo` | `{"title": string 0-300, "content": string 1-20000}` | - | `{"seo_title": string <=60, "meta_description": string <=160}` |
 | `excerpt` | `{"content": string 1-20000}` | - | `{"excerpt": string}` |
 | `alt_text` | `{"attachment_id": int > 0}` | - | `{"alt_text": string <=150}` |
+| `apply_alt_text` | `{"attachment_id": int > 0, "alt_text": string}` | - | `{"saved": true}` |
+| `apply_seo_meta` | `{"meta_description": string}`, plus a top-level `post_id` > 0 | - | `{"saved": bool, "meta_key": string}` |
+
+`<tone>` is one of `professional`, `friendly`, `concise`, `persuasive`, `casual`, `confident`. An
+omitted tone falls back to the site default tone from settings; any other value is rejected with
+`aiwr_invalid_input`.
+
+The two apply actions persist a result the editor already previewed. They make no provider call,
+skip the configuration, rate-limit, and budget checks, and write no activity-log row.
+`apply_alt_text` requires `edit_post` on the attachment; `apply_seo_meta` writes to the
+`aiwr_seo_meta_key` filtered meta key (default `_aiwr_meta_description`) and fires
+`aiwr_seo_meta_saved`.
 
 ### Non-streaming response (200, `application/json`)
 
