@@ -33,6 +33,56 @@ function getConfig() {
 	return ( typeof window !== 'undefined' && window.aiwrEditor ) || {};
 }
 
+function coreApiFetch() {
+	return ( typeof window !== 'undefined' && window.wp?.apiFetch ) || null;
+}
+
+/**
+ * The REST nonce to send with a request.
+ *
+ * The localized nonce is fixed at page load and expires after a day, while core's api-fetch nonce
+ * middleware is updated whenever the editor refreshes an expired nonce. Prefer the live one.
+ *
+ * @param {Object} config Localized editor config.
+ * @return {string} Nonce.
+ */
+function currentNonce( config ) {
+	return coreApiFetch()?.nonceMiddleware?.nonce || config.nonce;
+}
+
+/**
+ * Fetch a fresh REST nonce from core's nonce endpoint and store it on the api-fetch middleware.
+ *
+ * @return {Promise<boolean>} True when a new nonce was stored.
+ */
+async function refreshNonce() {
+	const apiFetch = coreApiFetch();
+
+	if (
+		! apiFetch ||
+		! apiFetch.nonceEndpoint ||
+		! apiFetch.nonceMiddleware
+	) {
+		return false;
+	}
+
+	try {
+		const response = await fetch( apiFetch.nonceEndpoint, {
+			credentials: 'same-origin',
+		} );
+		const nonce = response.ok ? ( await response.text() ).trim() : '';
+
+		if ( ! nonce ) {
+			return false;
+		}
+
+		apiFetch.nonceMiddleware.nonce = nonce;
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /**
  * Split an SSE buffer into complete events plus the incomplete trailing remainder.
  *
@@ -175,7 +225,7 @@ async function doRequest( params ) {
 			credentials: 'same-origin',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-WP-Nonce': config.nonce,
+				'X-WP-Nonce': currentNonce( config ),
 			},
 			body,
 		} );
@@ -210,18 +260,36 @@ async function doRequest( params ) {
 	};
 }
 
+async function requestWithFallback( params ) {
+	try {
+		return await doRequest( params );
+	} catch ( err ) {
+		if ( params.stream && err instanceof AIWRError && err.retriable ) {
+			return doRequest( { ...params, stream: false } );
+		}
+		throw err;
+	}
+}
+
 /**
  * Run a generate request, retrying once without streaming on an early stream failure.
+ *
+ * When the nonce has expired (an editor tab left open for a day), a fresh one is fetched from
+ * core and the request is sent once more.
  *
  * @param {Object} params Request parameters (action, input, options, postId, stream, onDelta).
  * @return {Promise<Object>} Normalized result.
  */
 export async function generate( params ) {
 	try {
-		return await doRequest( params );
+		return await requestWithFallback( params );
 	} catch ( err ) {
-		if ( params.stream && err instanceof AIWRError && err.retriable ) {
-			return doRequest( { ...params, stream: false } );
+		if (
+			err instanceof AIWRError &&
+			'rest_cookie_invalid_nonce' === err.code &&
+			( await refreshNonce() )
+		) {
+			return requestWithFallback( params );
 		}
 		throw err;
 	}

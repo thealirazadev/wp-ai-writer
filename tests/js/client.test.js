@@ -83,6 +83,7 @@ beforeEach( () => {
 		restUrl: '/wp-json/aiwr/v1/generate',
 		nonce: 'test-nonce',
 	};
+	delete window.wp;
 } );
 
 describe( 'splitSSE', () => {
@@ -365,5 +366,86 @@ describe( 'generate', () => {
 		} ).catch( ( e ) => e );
 
 		expect( error ).toBeInstanceOf( AIWRError );
+	} );
+
+	it( 'sends the live api-fetch nonce over the localized one', async () => {
+		window.wp = {
+			apiFetch: { nonceMiddleware: { nonce: 'live-nonce' } },
+		};
+		global.fetch = jest
+			.fn()
+			.mockResolvedValue(
+				jsonResponse( { action: 'draft', result: { html: '' } } )
+			);
+
+		await generate( { action: 'draft', input: { prompt: 'hi' } } );
+
+		expect(
+			global.fetch.mock.calls[ 0 ][ 1 ].headers[ 'X-WP-Nonce' ]
+		).toBe( 'live-nonce' );
+	} );
+
+	it( 'refreshes an expired nonce and retries once', async () => {
+		window.wp = {
+			apiFetch: {
+				nonceEndpoint: '/wp-admin/admin-ajax.php?action=rest-nonce',
+				nonceMiddleware: { nonce: 'stale-nonce' },
+			},
+		};
+		global.fetch = jest
+			.fn()
+			.mockResolvedValueOnce(
+				jsonResponse(
+					{
+						code: 'rest_cookie_invalid_nonce',
+						message: 'Cookie check failed',
+						data: { status: 403 },
+					},
+					{ ok: false, status: 403 }
+				)
+			)
+			.mockResolvedValueOnce( {
+				ok: true,
+				status: 200,
+				text: async () => 'fresh-nonce',
+			} )
+			.mockResolvedValueOnce(
+				jsonResponse( {
+					action: 'draft',
+					result: { html: '<p>Hi</p>' },
+				} )
+			);
+
+		const out = await generate( {
+			action: 'draft',
+			input: { prompt: 'hi' },
+		} );
+
+		expect( out.result.html ).toBe( '<p>Hi</p>' );
+		expect( global.fetch ).toHaveBeenCalledTimes( 3 );
+		expect( global.fetch.mock.calls[ 1 ][ 0 ] ).toBe(
+			'/wp-admin/admin-ajax.php?action=rest-nonce'
+		);
+		expect(
+			global.fetch.mock.calls[ 2 ][ 1 ].headers[ 'X-WP-Nonce' ]
+		).toBe( 'fresh-nonce' );
+	} );
+
+	it( 'does not retry an invalid nonce when no refresh endpoint exists', async () => {
+		global.fetch = jest.fn().mockResolvedValue(
+			jsonResponse(
+				{
+					code: 'rest_cookie_invalid_nonce',
+					message: 'Cookie check failed',
+					data: { status: 403 },
+				},
+				{ ok: false, status: 403 }
+			)
+		);
+
+		await expect(
+			generate( { action: 'draft', input: { prompt: 'hi' } } )
+		).rejects.toMatchObject( { code: 'rest_cookie_invalid_nonce' } );
+		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
 	} );
 } );
