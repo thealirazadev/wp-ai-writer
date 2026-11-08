@@ -14,8 +14,8 @@
     "env": "wp-env"
   },
   "devDependencies": {
-    "@wordpress/env": "11.11.0",
-    "@wordpress/scripts": "33.0.0"
+    "@wordpress/env": "12.1.0",
+    "@wordpress/scripts": "37.1.0"
   },
   "overrides": {
     "adm-zip": "0.6.0",
