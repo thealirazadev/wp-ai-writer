@@ -287,3 +287,11 @@ every non-obvious decision with its reason.
   `edit_post` on an attachment requires `edit_others_posts` for non-owners. Chosen over the looser
   `upload_files` (core's media-library browse gate) because failing closed here only costs a manual
   alt-text entry. Revisit if the author workflow proves to matter in real use.
+
+- 2026-11-17: Dependabot alert cleanup. CI on main was already green; the red runs were
+  "Dependabot Updates" jobs failing because transitive deps (isomorphic-git, qs, serialize-javascript,
+  minimatch) could not be resolved by the update path. Added npm `overrides` (isomorphic-git 1.38.6,
+  `qs@<6.16.1` -> 6.16.1, serialize-javascript 7.1.3, `minimatch@>=7 <11.0.1` -> 11.0.1) and
+  refreshed package-lock.json; lint, unit tests and build pass. composer.lock already pinned the
+  patched phpcs/wpcs versions (local vendor was stale; `composer install` fixed it). The remaining
+  deepmerge alert is a withdrawn advisory with no fix.
