@@ -71,6 +71,28 @@ class AIWR_Test_Limits extends WP_UnitTestCase {
 		remove_filter( 'aiwr_requests_per_minute', '__return_zero' );
 	}
 
+	public function test_rate_limit_honors_a_lower_filtered_limit() {
+		$limit = static function () {
+			return 2;
+		};
+		add_filter( 'aiwr_requests_per_minute', $limit );
+
+		$this->assertTrue( AIWR_Limits::check_rate_limit( 11 ) );
+		$this->assertTrue( AIWR_Limits::check_rate_limit( 11 ) );
+		$this->assertWPError( AIWR_Limits::check_rate_limit( 11 ) );
+
+		remove_filter( 'aiwr_requests_per_minute', $limit );
+	}
+
+	public function test_rate_limit_resets_a_malformed_window() {
+		$user_id = 12;
+
+		set_transient( AIWR_Limits::RATE_PREFIX . $user_id, 'not-an-array', AIWR_Limits::RATE_WINDOW_SECONDS );
+
+		$this->assertTrue( AIWR_Limits::check_rate_limit( $user_id ) );
+		$this->assertSame( 1, get_transient( AIWR_Limits::RATE_PREFIX . $user_id )['count'] );
+	}
+
 	public function test_budget_is_uncapped_when_zero() {
 		update_option( AIWR_Settings::OPTION, array( 'monthly_budget_tokens' => 0 ) );
 		update_option(
