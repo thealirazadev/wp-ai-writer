@@ -107,7 +107,8 @@ WP_TESTS_DIR=/path/to/wordpress-tests-lib composer run test
 
 ## Design decisions
 
-The trade-offs worth knowing about, and the alternative each one rejected.
+The trade-offs worth knowing about, and the alternative each one rejected. The full list, including
+the bugs and edge cases found along the way, is in [`docs/decisions.md`](docs/decisions.md).
 
 **The provider key never leaves the server.** It is stored in the `aiwr_settings` option, attached
 to the outbound request in PHP, and rendered in the settings screen only as a mask of its last four

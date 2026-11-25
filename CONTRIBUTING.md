@@ -6,9 +6,8 @@ the local setup, the checks that must pass, and what a good pull request looks l
 
 ## Ground rules
 
-- Read `docs/PRD.md`, `docs/rules.md`, `docs/architecture.md`, and `docs/phases.md` before making a
-  change. The PRD and architecture are the source of truth; do not change them without flagging it
-  first.
+- Read `docs/architecture.md` and `docs/decisions.md` before making a change. They describe how the
+  plugin is put together and why; raise a design change in an issue before changing either.
 - No vendor or model names anywhere (code, comments, UI strings, commits). The plugin talks to a
   neutral "LLM provider API"; the model identifier is admin-supplied configuration, never a
   hardcoded default.
@@ -95,7 +94,7 @@ WP-capable-host step.
   lint:fix` (PHPCBF) for mechanical fixes.
 - JavaScript follows the `@wordpress/scripts` ESLint config (`eslint.config.js`). Run `npm run
   lint:js:fix` to autofix.
-- Follow the naming rules in `docs/rules.md`: PHP classes `AIWR_Pascal_Snake` in
+- Follow the naming conventions: PHP classes `AIWR_Pascal_Snake` in
   `includes/class-aiwr-*.php`; functions, hooks, options, and transients prefixed `aiwr_`; the REST
   namespace is `aiwr/v1`; the text domain is `wp-ai-writer`.
 - Wrap every user-facing string in the `wp-ai-writer` text domain. If your change adds or edits a

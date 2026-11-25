@@ -73,7 +73,7 @@ would be a server-side request forgery hazard.
 The alt text action loads the attachment via `get_attached_file()`, validates type (jpeg, png,
 gif, webp) and size (max 5 MB), base64-encodes it into the provider's image content block, and
 errors with `aiwr_image_unreadable` when the file is missing locally (offloaded media is a known
-v1 limitation, noted in the PRD).
+v1 limitation).
 
 ## Proposed folder / file tree
 
@@ -134,7 +134,7 @@ wp-ai-writer/
     js/
       client.test.js               SSE frame parser + fallback branching (Jest)
       blocks.test.js               Missing-alt scan + text extraction (Jest)
-  docs/                            Planning docs (this folder)
+  docs/                            Architecture, design, API contracts, testing, decisions
   README.md
 ```
 

@@ -33,8 +33,8 @@ system, no bundled fonts, no external assets.
 
 ## Sidebar layout
 
-- Header: plugin title + the five actions as a compact tab list (icon + label). Disabled actions
-  (pre-implementation phases) render dimmed with a "coming soon" tooltip.
+- Header: plugin title + the five actions as a compact tab list (icon + label). An unrecognized
+  action name falls back to an informational notice instead of a panel.
 - Action body order, top to bottom: inputs (textarea/selects), primary Generate button, result
   area, apply/discard row, usage-error notice slot.
 - Preview area: max-height 320px with internal scroll; content wraps; long unbroken strings
