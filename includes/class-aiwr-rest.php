@@ -310,16 +310,16 @@ class AIWR_Rest {
 	 * corrupting the streamed HTML. This holds back a trailing unfinished tag or character reference
 	 * in `$pending` and prepends it to the next fragment, so wp_kses_post() only sees whole tokens.
 	 *
-	 * @param string $pending Carry-over between calls, updated by reference.
-	 * @param string $text    New fragment from the provider.
-	 * @param bool   $final   True on the last call, to flush whatever is still held back.
+	 * @param string $pending  Carry-over between calls, updated by reference.
+	 * @param string $text     New fragment from the provider.
+	 * @param bool   $is_final True on the last call, to flush whatever is still held back.
 	 * @return string Sanitized text that is safe to emit now (may be empty).
 	 */
-	public static function sanitize_stream_chunk( &$pending, $text, $final = false ) {
+	public static function sanitize_stream_chunk( &$pending, $text, $is_final = false ) {
 		$text    = $pending . (string) $text;
 		$pending = '';
 
-		if ( ! $final ) {
+		if ( ! $is_final ) {
 			$cut = self::unfinished_tail_offset( $text );
 
 			if ( null !== $cut ) {
