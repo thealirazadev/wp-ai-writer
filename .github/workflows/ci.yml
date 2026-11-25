@@ -17,6 +17,7 @@ jobs:
   php:
     name: PHP 8.2 lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -51,6 +52,7 @@ jobs:
   js:
     name: Node 24 lint, test, build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
