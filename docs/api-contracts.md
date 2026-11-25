@@ -81,7 +81,9 @@ data: {"usage": {"input_tokens": 812, "output_tokens": 431}, "cost_estimate": 0.
 
 - `delta` events carry text fragments in order; the client concatenates them.
 - `done` is the terminal success event; the assembled text is authoritative only after `done`
-  (the server applies `wp_kses_post` to the deltas it relays).
+  (the server applies `wp_kses_post` to the deltas it relays, holding back a tag or character
+  reference that is split across provider fragments until it is complete, so a delta boundary
+  never falls inside one).
 - On failure after headers are sent, the terminal event is `error`; its `data` is the standard
   error object (below), and the stream closes:
 

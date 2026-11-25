@@ -2,7 +2,7 @@
  * Sidebar shell: action navigation across the five writing actions.
  */
 import { __ } from '@wordpress/i18n';
-import { TabPanel, Notice } from '@wordpress/components';
+import { TabPanel } from '@wordpress/components';
 
 import DraftPanel from './actions/draft';
 import RewritePanel from './actions/rewrite';
@@ -18,14 +18,6 @@ const ACTIONS = [
 	{ name: 'alt_text', title: __( 'Alt text', 'wp-ai-writer' ) },
 ];
 
-function ComingSoon() {
-	return (
-		<Notice status="info" isDismissible={ false }>
-			{ __( 'This action is coming in a later phase.', 'wp-ai-writer' ) }
-		</Notice>
-	);
-}
-
 function renderPanel( name ) {
 	switch ( name ) {
 		case 'draft':
@@ -39,7 +31,7 @@ function renderPanel( name ) {
 		case 'alt_text':
 			return <AltTextPanel />;
 		default:
-			return <ComingSoon />;
+			return null;
 	}
 }
 

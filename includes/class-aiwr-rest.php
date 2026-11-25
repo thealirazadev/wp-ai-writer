@@ -217,15 +217,27 @@ class AIWR_Rest {
 
 		$assembled = '';
 		$saw_delta = false;
+		$pending   = '';
 
-		$on_delta = function ( $text ) use ( &$assembled, &$saw_delta ) {
-			$clean      = wp_kses_post( $text );
+		$emit_clean = function ( $clean ) use ( &$assembled, &$saw_delta ) {
+			if ( '' === $clean ) {
+				return;
+			}
+
 			$assembled .= $clean;
 			$saw_delta  = true;
 			$this->emit_event( 'delta', array( 'text' => $clean ) );
 		};
 
-		$outcome  = AIWR_Provider::stream( $payload, $on_delta );
+		$on_delta = function ( $text ) use ( &$pending, $emit_clean ) {
+			$emit_clean( self::sanitize_stream_chunk( $pending, $text ) );
+		};
+
+		$outcome = AIWR_Provider::stream( $payload, $on_delta );
+
+		// Whatever was held back as an unfinished tag or entity is sanitized and sent as is.
+		$emit_clean( self::sanitize_stream_chunk( $pending, '', true ) );
+
 		$duration = $this->elapsed_ms( $started );
 		$user_id  = get_current_user_id();
 
@@ -288,6 +300,59 @@ class AIWR_Rest {
 		AIWR_Limits::refresh_usage();
 
 		exit;
+	}
+
+	/**
+	 * Sanitize one streamed text fragment without breaking tags or entities split across fragments.
+	 *
+	 * Provider deltas are cut at arbitrary points, so a tag such as `<strong>` can arrive as `<str`
+	 * and `ong>`. Sanitizing each fragment on its own strips the first half and escapes the second,
+	 * corrupting the streamed HTML. This holds back a trailing unfinished tag or character reference
+	 * in `$pending` and prepends it to the next fragment, so wp_kses_post() only sees whole tokens.
+	 *
+	 * @param string $pending  Carry-over between calls, updated by reference.
+	 * @param string $text     New fragment from the provider.
+	 * @param bool   $is_final True on the last call, to flush whatever is still held back.
+	 * @return string Sanitized text that is safe to emit now (may be empty).
+	 */
+	public static function sanitize_stream_chunk( &$pending, $text, $is_final = false ) {
+		$text    = $pending . (string) $text;
+		$pending = '';
+
+		if ( ! $is_final ) {
+			$cut = self::unfinished_tail_offset( $text );
+
+			if ( null !== $cut ) {
+				$pending = substr( $text, $cut );
+				$text    = substr( $text, 0, $cut );
+			}
+		}
+
+		return '' === $text ? '' : wp_kses_post( $text );
+	}
+
+	/**
+	 * Byte offset where an unfinished trailing tag or character reference starts, if any.
+	 *
+	 * @param string $text Text to inspect.
+	 * @return int|null Offset of the unfinished tail, or null when the text ends cleanly.
+	 */
+	private static function unfinished_tail_offset( $text ) {
+		$lt = strrpos( $text, '<' );
+
+		if ( false !== $lt && false === strpos( $text, '>', $lt ) ) {
+			return $lt;
+		}
+
+		$amp = strrpos( $text, '&' );
+
+		// Character references are short (the longest named one is about 30 bytes); only a tail
+		// that could still become one is held back.
+		if ( false !== $amp && preg_match( '/^&#?[a-zA-Z0-9]{0,32}$/', substr( $text, $amp ) ) ) {
+			return $amp;
+		}
+
+		return null;
 	}
 
 	/**

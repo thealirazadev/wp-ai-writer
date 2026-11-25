@@ -135,12 +135,54 @@ class AIWR_Test_Log extends WP_UnitTestCase {
 
 		$old   = $this->insert_row();
 		$fresh = $this->insert_row();
-		$this->backdate( $old, 20 * DAY_IN_SECONDS );
+		// 45 days is past the 15-day setting, inside the 90-day default, and always a prior
+		// calendar month, which the scheduled prune never protects.
+		$this->backdate( $old, 45 * DAY_IN_SECONDS );
 
 		AIWR_Log::run_scheduled_prune();
 
 		$this->assertFalse( $this->row_exists( $old ) );
 		$this->assertTrue( $this->row_exists( $fresh ) );
+	}
+
+	public function test_scheduled_prune_keeps_current_month_rows_for_the_budget() {
+		update_option(
+			AIWR_Settings::OPTION,
+			array_merge( AIWR_Settings::defaults(), array( 'log_retention_days' => 1 ) )
+		);
+
+		$month_start = gmdate( 'Y-m-01 00:00:00' );
+		$this_month  = $this->insert_row(
+			array(
+				'input_tokens'  => 10,
+				'output_tokens' => 5,
+			)
+		);
+		$last_month  = $this->insert_row();
+		$this->set_created_at( $this_month, $month_start );
+		$this->backdate( $last_month, 60 * DAY_IN_SECONDS );
+
+		AIWR_Log::run_scheduled_prune();
+
+		$this->assertTrue( $this->row_exists( $this_month ) );
+		$this->assertFalse( $this->row_exists( $last_month ) );
+
+		$usage = AIWR_Limits::get_current_usage();
+		$this->assertSame( 10, $usage['input_tokens'] );
+		$this->assertSame( 5, $usage['output_tokens'] );
+	}
+
+	public function test_effective_retention_days_never_cuts_into_the_current_month() {
+		$month_start = (int) strtotime( gmdate( 'Y-m-01 00:00:00' ) . ' UTC' );
+
+		foreach ( array( 1, 7, 30 ) as $days ) {
+			$effective = AIWR_Log::effective_retention_days( $days );
+			$this->assertGreaterThanOrEqual( $days, $effective );
+			$this->assertLessThanOrEqual( $month_start, time() - $effective * DAY_IN_SECONDS );
+		}
+
+		$this->assertSame( 0, AIWR_Log::effective_retention_days( 0 ) );
+		$this->assertSame( 365, AIWR_Log::effective_retention_days( 365 ) );
 	}
 
 	public function test_scheduled_prune_refreshes_the_usage_counter() {
@@ -219,6 +261,14 @@ class AIWR_Test_Log extends WP_UnitTestCase {
 		global $wpdb;
 		$table = AIWR_Log::table();
 		$when  = gmdate( 'Y-m-d H:i:s', time() - (int) $seconds_ago );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET created_at = %s WHERE id = %d", $when, $id ) );
+	}
+
+	private function set_created_at( $id, $when ) {
+		global $wpdb;
+		$table = AIWR_Log::table();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET created_at = %s WHERE id = %d", $when, $id ) );

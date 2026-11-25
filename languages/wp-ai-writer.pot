@@ -307,7 +307,7 @@ msgid "Combined input and output tokens allowed per calendar month. Set to 0 for
 msgstr ""
 
 #: includes/class-aiwr-settings.php:229
-msgid "Delete activity-log rows older than this many days. A daily task prunes them. Set to 0 to keep them forever."
+msgid "Delete activity-log rows older than this many days. A daily task prunes them, but always keeps the current month so the budget stays accurate. Set to 0 to keep them forever."
 msgstr ""
 
 #: includes/class-aiwr-settings.php:295
@@ -626,10 +626,6 @@ msgstr ""
 
 #: src/sidebar.js:18
 msgid "Alt text"
-msgstr ""
-
-#: src/sidebar.js:24
-msgid "This action is coming in a later phase."
 msgstr ""
 
 #: src/utils/blocks.js:96

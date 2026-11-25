@@ -44,7 +44,8 @@ The remaining configuration is entered on **Settings → AI Writer**: the provid
 server-side, shown masked, never sent to the browser), the model identifier, the default tone used
 for drafting and rewriting when the editor does not pick one, the monthly token budget, optional
 per-million-token prices for cost estimates, and the activity-log retention window in days (a daily
-WP-Cron task prunes older rows; set it to 0 to keep the log forever). Usage for the
+WP-Cron task prunes older rows but always keeps the current month, which the budget is computed
+from; set it to 0 to keep the log forever). Usage for the
 current month and the full activity log (**Tools → AI Writer Log**) are visible to administrators.
 
 Copy `.env.example` to `.env` for local development values (dev key, mock endpoint, model string).

@@ -226,7 +226,7 @@ class AIWR_Settings {
 			name="<?php echo esc_attr( self::OPTION ); ?>[log_retention_days]"
 			value="<?php echo esc_attr( (string) $settings['log_retention_days'] ); ?>" />
 		<p class="description" id="aiwr_log_retention_days_desc">
-			<?php esc_html_e( 'Delete activity-log rows older than this many days. A daily task prunes them. Set to 0 to keep them forever.', 'wp-ai-writer' ); ?>
+			<?php esc_html_e( 'Delete activity-log rows older than this many days. A daily task prunes them, but always keeps the current month so the budget stays accurate. Set to 0 to keep them forever.', 'wp-ai-writer' ); ?>
 		</p>
 		<?php
 	}
