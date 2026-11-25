@@ -17,9 +17,9 @@ What you would like the plugin to do.
 
 ## Scope check
 
-The plugin has deliberate non-goals (see `docs/PRD.md`). Please confirm your
-request does not fall into one of these, or explain why it should be
-reconsidered:
+The plugin has deliberate non-goals (the reasoning is in `docs/decisions.md`).
+Please confirm your request does not fall into one of these, or explain why it
+should be reconsidered:
 
 - [ ] It is not bulk or automated generation (the plugin does one action per
       explicit click).
