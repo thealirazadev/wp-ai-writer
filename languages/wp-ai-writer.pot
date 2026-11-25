@@ -628,10 +628,6 @@ msgstr ""
 msgid "Alt text"
 msgstr ""
 
-#: src/sidebar.js:24
-msgid "This action is coming in a later phase."
-msgstr ""
-
 #: src/utils/blocks.js:96
 msgid "Image"
 msgstr ""
