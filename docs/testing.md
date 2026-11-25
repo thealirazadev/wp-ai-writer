@@ -19,6 +19,9 @@ touched only in manual QA with the dev key.
   and sets `aiwr_db_version`.
 - Settings sanitization: masked-key resubmit keeps the key, blank clears it, invalid budget/prices
   rejected.
+- Stream relay: `AIWR_Rest::sanitize_stream_chunk()` keeps tags and entities split across
+  provider fragments intact and still strips disallowed markup.
+- Log prune: the scheduled prune never deletes current-month rows the budget is computed from.
 
 ### Integration tests (PHPUnit, REST dispatch)
 

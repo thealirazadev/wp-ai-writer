@@ -157,16 +157,36 @@ class AIWR_Log {
 	 * Cron callback: prune the log to the configured retention window, then refresh the usage counter.
 	 *
 	 * The retention setting is read on each run so a changed value takes effect on the next daily
-	 * pass. Usage is recomputed only when rows were actually removed, since the counter is derived
-	 * from the log and an aggressive retention could drop current-month rows.
+	 * pass. The window never reaches into the current calendar month: the usage counter, and so the
+	 * monthly budget, is recomputed from these rows, and pruning them would hand the spent budget
+	 * back mid-month. Usage is recomputed only when rows were actually removed.
 	 */
 	public static function run_scheduled_prune() {
 		$settings = aiwr_get_settings();
-		$deleted  = self::prune_older_than( $settings['log_retention_days'] );
+		$deleted  = self::prune_older_than( self::effective_retention_days( (int) $settings['log_retention_days'] ) );
 
 		if ( $deleted > 0 ) {
 			AIWR_Limits::refresh_usage();
 		}
+	}
+
+	/**
+	 * Widen a retention window so its cutoff never falls inside the current calendar month (UTC).
+	 *
+	 * @param int $days Configured retention in days. Zero or less keeps every row and is returned as is.
+	 * @return int Retention in days whose cutoff is at or before the first of the current month.
+	 */
+	public static function effective_retention_days( $days ) {
+		$days = (int) $days;
+
+		if ( $days <= 0 ) {
+			return $days;
+		}
+
+		$month_start = (int) strtotime( gmdate( 'Y-m-01 00:00:00' ) . ' UTC' );
+		$month_days  = (int) floor( max( 0, time() - $month_start ) / DAY_IN_SECONDS ) + 1;
+
+		return max( $days, $month_days );
 	}
 
 	/**

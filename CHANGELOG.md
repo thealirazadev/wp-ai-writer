@@ -24,6 +24,12 @@ tagged.
 
 ### Fixed
 
+- Streamed drafts and rewrites no longer lose markup when a provider fragment ends
+  inside a tag or entity: the relay holds back the unfinished tail before running
+  `wp_kses_post`, instead of sanitizing each fragment on its own.
+- The daily log prune no longer deletes rows from the current month, which the
+  usage counter is recomputed from; a short retention used to refund spent budget.
+- Removed an unreachable "coming in a later phase" sidebar branch and its string.
 - Wired label associations (`label_for`) and `aria-describedby` on the settings
   fields, so each control has a programmatically associated label and description.
 
